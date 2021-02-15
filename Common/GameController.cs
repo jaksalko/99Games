@@ -28,6 +28,7 @@ public class GameController : MonoBehaviour
     int snow_total, snow_remain;
     int moveCount;
 
+    [Header ("For Achievement Datas")]
     int dropCount;
     int crashCount;
     int carryCount;
