@@ -29,12 +29,12 @@ public class GameController : MonoBehaviour
     int moveCount;
 
     [Header ("For Achievement Datas")]
-    int dropCount;
-    int crashCount;
-    int carryCount;
-    int resetCount;
-    int crackCount;
-    int cloudCount;
+    int dropCount; // 몇번 떨어졌는지
+    int crashCount; // 몇번 부딪혔는지 (캐릭터)
+    int carryCount; // 몇번 업었는지
+    int resetCount; // 몇번 되돌렸는지
+    int crackCount; // 몇번 크래커를 부셨는지
+    int cloudCount; // 몇번 솜사탕을 탔는지
 
     [SerializeField]
     int parfaitOrder;
