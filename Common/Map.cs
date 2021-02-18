@@ -540,7 +540,7 @@ public class Map : MonoBehaviour, IMap
                 if (player.onCloud)
                     player.isLock = true;
             }
-            else if(pos.y == 0 && next >= BlockNumber.upperNormal && next < BlockNumber.upperObstacle)
+            else if(player.state == Player.State.Master && pos.y == 0 && next >= BlockNumber.upperNormal && next < BlockNumber.upperObstacle)
             {
                 player.actionnum = 3;
                 player.stateChange = true;
