@@ -127,11 +127,11 @@ public class Player : MonoBehaviour , IMoveable
             //CharacterMove(map.map);
             
             map.SetBlockData((int)transform.position.x, (int)transform.position.z, temp);
-            //targetPos =  map.GetDestination(this, transform.position);
-            map.ResettargetList();
-            targetPositions = map.GetDestination(this, transform.position).ToList();
-            Debug.Log(targetPositions.Count);
-            Debug.Log("target position : " + targetPositions[targetPositions.Count - 1]);
+            
+            
+            map.GetDestination(this, transform.position);
+            Debug.Log(name + " : "+targetPositions.Count);
+            Debug.Log(name + " : " + "target position : " + targetPositions[targetPositions.Count - 1]);
             isMoving = true;
         //}
     }
@@ -206,7 +206,7 @@ public class Player : MonoBehaviour , IMoveable
             if (distance < 0.25f)//arrive condition
             {
                 transform.position = targetPositions[0].Item1;
-                Debug.Log("Arrive... target position : " + targetPositions[0].Item1 + "  distance : " + distance);
+                Debug.Log(name + " : " + "Arrive... target position : " + targetPositions[0].Item1 + "  distance : " + distance);
 
 
                 if (targetPositions.Count != 1)
@@ -275,13 +275,7 @@ public class Player : MonoBehaviour , IMoveable
                             transform.SetParent(other.transform);
                         }
                     }
-                    else if(other.isLock && otherPos + dir[(other.temp % 10) - 1] != myPos)
-                    {
-                        other.isLock = false;
-                        Debug.Log(other.name + " Lock move");
-                        //other이 다른 곳을 보고 있을 수 있으므로
-                        other.Move(GameController.instance.GetMap(), (other.temp % 10) - 1);
-                    }
+                    
                 }
 
 
