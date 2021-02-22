@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Linq;
+
 public class Player : MonoBehaviour , IMoveable
 {
 	[SerializeField]
@@ -127,7 +129,7 @@ public class Player : MonoBehaviour , IMoveable
             map.SetBlockData((int)transform.position.x, (int)transform.position.z, temp);
             //targetPos =  map.GetDestination(this, transform.position);
             map.ResettargetList();
-            targetPositions = map.GetDestination(this, transform.position);
+            targetPositions = map.GetDestination(this, transform.position).ToList();
             Debug.Log(targetPositions.Count);
             Debug.Log("target position : " + targetPositions[targetPositions.Count - 1]);
             isMoving = true;
