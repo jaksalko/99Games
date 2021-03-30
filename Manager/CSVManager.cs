@@ -49,13 +49,13 @@ public class CSVManager : MonoBehaviour
     }
     void Start()
     {
-        SetIsalndList();
+        SetIslandList();
 
         SetRewardList();
 
     }
 
-    public void SetIsalndList()
+    public void SetIslandList()
     {
         stage = CSVReader.Read("stage");
         Debug.Log("stage count : " + stage);
@@ -68,19 +68,47 @@ public class CSVManager : MonoBehaviour
             newMap.total_snow = int.Parse(stage[i]["snow_total"].ToString());
             int width = int.Parse(stage[i]["width"].ToString());
             int height = int.Parse(stage[i]["height"].ToString());
-            int[,] datas = MapString(stage[i]["data"].ToString().Split(','), height, width);
+
+
+            List<List<int>> datas = MapString(stage[i]["data"].ToString().Split(','), height, width);
+            List<List<int>> styles = new List<List<int>>();
+
+            
+            for(int h = 0; h < height; h++)
+            {
+                
+                for(int w = 0; w < width; w++)
+                {
+                    int blockNumber = datas[h][w];
+                    styles.Add(GetStyleList(blockNumber, title));
+                }
+            }
+
             Debug.Log(stage[i]["posA"].ToString());
             Vector3 posA = GetVector3(stage[i]["posA"].ToString().Split('/'));
             Vector3 posB = GetVector3(stage[i]["posB"].ToString().Split('/'));
             bool isParfait = int.Parse(stage[i]["parfait"].ToString()) == 0 ? false : true;
             List<int> star_limit = GetList(stage[i]["star_limit"].ToString().Split('/'));
 
-            newMap.Initialize(new Vector2(height, width), isParfait, posA, posB, datas, star_limit);
+            newMap.Initialize(new Vector2(height, width), isParfait, posA, posB, datas, styles, star_limit);
             newMap.transform.SetParent(transform);
 
             islands[title].maps.Add(newMap);
 
         }
+    }
+
+    List<int> GetStyleList(int blockNumber,int title)
+    {
+        List<int> style = new List<int>();
+
+        
+            style.Add(title);
+            style.Add(title);
+            style.Add(title);
+            
+        
+        return style;
     }
 
     public void SetRewardList()
@@ -103,22 +131,28 @@ public class CSVManager : MonoBehaviour
         }
     }
 
-    int[,] MapString(string[] data_string , int height , int width)
+    List<List<int>> MapString(string[] data_string , int height , int width)
     {
-        
 
-        int[,] datas = new int[height,width];
+        List<List<int>> map_datas = new List<List<int>>();
+
+        
         int count = 0;
+
         for(int i = 0 ; i < height ; i++)
         {
+            List<int> line = new List<int>();
             for(int j = 0 ; j < width ; j++)
             {
-                datas[i,j] = int.Parse(data_string[count]);
+                int data = int.Parse(data_string[count]);
+                line.Add(data);
+                
                 count++;
             }
+            map_datas.Add(line);
         }
 
-        return datas;
+        return map_datas;
     }
 
     Vector3 GetVector3(string[] data_string)

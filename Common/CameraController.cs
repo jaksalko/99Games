@@ -25,6 +25,7 @@ public class CameraController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        
         //target = GameController.instance.nowPlayer;
         camera_transform = main_camera.transform;
         
@@ -220,6 +221,7 @@ public class CameraController : MonoBehaviour
         }
         startPanel.SetActive(false);
         GameController.instance.GameStart();
+        Debug.Log("end scan");
         cameraView = 1;
         coroutine = null;
         //GameController.instance.GameStart();

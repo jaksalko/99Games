@@ -78,7 +78,11 @@ public class TutorialManager : MonoBehaviour
     public Camera inGameCamera;
     XMLManager xmlManager = XMLManager.ins;
 
-    string[] left_script_credit = {"안녕! 나는 핑이라고 해.",//laugh
+
+    #region Scenario
+
+    private string[] left_script_credit = new string[]
+        {"안녕! 나는 핑이라고 해.",//laugh
     "네가 우리와 함께 디저트 월드를"+Environment.NewLine+"청소하는 친구구나! 이름이….",//laugh
     "펭! 먼저 인사하는 게 어딨어!"+Environment.NewLine+"같이 하기로 했잖아!",//embar
     "반, 반가워 "+XMLManager.ins.itemDB.user.nickname+"!",
@@ -91,33 +95,41 @@ public class TutorialManager : MonoBehaviour
     "여기 위를 보면, 우리의 주식인 ‘붕’이랑",
     "생명력인 ‘하트’를 얼만큼 소지했는지 볼 수 있어!",
     "우리는 ‘하트’가 있어야 일 할 수 있다는 걸 잊지마!"};
-    string[] right_script_credit = {"나는 펭.",//idle
+
+
+    string[] right_script_credit = new string[]
+        {"나는 펭.",//idle
     XMLManager.ins.itemDB.user.nickname+". 반가워.",//idle
     "빨리 일을 시작하도록 할까.",//idle
     "네가 너무 느린 거겠지, 핑.",//shed
     "그 밖에 다양한 기능도 있지."+Environment.NewLine+"이제 일을 하러 가볼….",//idle
     "(붕…. 많이 벌고 싶다.)"};//shed
 
-    string[] left_script_gamestart = {"벌써 시작하는 거야?",
+    string[] left_script_gamestart = new string[]
+        {"벌써 시작하는 거야?",
     "맞다, 맞다! "+XMLManager.ins.itemDB.user.nickname+"은 처음이니까!",
     "그럼, 바로 시작해볼까!"
 
     };
 
-    string[] right_script_gamestart = {"제일 중요한 걸 잊었잖아.",
+    string[] right_script_gamestart = new string[]
+        {"제일 중요한 걸 잊었잖아.",
     "이건 PLAY 버튼."+Environment.NewLine+"일을 시작하고 싶으면 여기를 눌러.",
     XMLManager.ins.itemDB.user.nickname+". 튜토리얼 섬으로 가자.",
     "어떻게 하는지 가르쳐 줄게."
     };
 
-    string[] left_script_end_tutorial_1 = {"후, 힘들었다.",
+    string[] left_script_end_tutorial_1 = new string[]
+        {"후, 힘들었다.",
     XMLManager.ins.itemDB.user.nickname+", 어때? 할 만한 것 같아?",
     "지금 조금 힘들더라도, 금방 적응 될 거야!",
     "걱정마, 난 훈련된 마쉬멜로우 펭귄인 걸!",
     XMLManager.ins.itemDB.user.nickname+". 다른 섬으로 떠날 준비는 되었지?",
     "섬과 섬 사이를 이동하는 법을 알려줄게!",
     "가운데 보이는 섬을 눌러봐!"};
-    string[] left_script_end_tutorial_2 = {"처음 보는 공간이지? 앞으로 익숙해질 거야.",
+
+    string[] left_script_end_tutorial_2 = new string[]
+        {"처음 보는 공간이지? 앞으로 익숙해질 거야.",
     "우리가 담당한 섬들을 여기서 볼 수 있어!",
     "대신 그만큼 붕을 많이 받을 수 있어!",
     "역시 펭은 똑똑하구나!",
@@ -131,9 +143,13 @@ public class TutorialManager : MonoBehaviour
     "그리고 별을 많이 획득할수록.... 더 특별한 보상을 받을 수 있다구!",
     "헤헤, 응. "+XMLManager.ins.itemDB.user.nickname+", 설명은 여기까지야.",
     "잘 할 수 있을 거야. 앞으로도 잘 부탁해!"};
-    string[] right_script_end_tutorial_1 = {"조금은 긴장하도록 해, 핑.",
+
+    string[] right_script_end_tutorial_1 = new string[]
+        {"조금은 긴장하도록 해, 핑.",
     "이제부터는 정말 시작이니까."};
-    string[] right_script_end_tutorial_2 = {"으엑…. 너무 많잖아.",
+
+    string[] right_script_end_tutorial_2 = new string[]
+        {"으엑…. 너무 많잖아.",
     XMLManager.ins.itemDB.user.nickname+". 한 번만 설명할 거야. 잘 들어.",
     "위에서는 우리가 청소할 섬을 선택할 수 있고",
     "아래에서는 스테이지를 선택할 수 있어.",
@@ -143,28 +159,37 @@ public class TutorialManager : MonoBehaviour
     "펭, 되게 신나보이네."};
 
 
-    string[] bp_tutorial_stage_3 = {"여긴 아까랑 똑같은 구역이네?",
+    string[] bp_tutorial_stage_3 = new string[]
+        {"여긴 아까랑 똑같은 구역이네?",
     "엥? 뭐가? 완전 똑같은데.",
     "괜찮아! 우리가 힘을 합하면…."};
-    string[] bp_tutorial_stage_2 = {"펭! 보고 싶었어, 아까는 못 만나는 줄 알았다니깐.",
+
+    string[] bp_tutorial_stage_2 = new string[]
+        {"펭! 보고 싶었어, 아까는 못 만나는 줄 알았다니깐.",
     "아! 그랬지!",
     "응! "+XMLManager.ins.itemDB.user.nickname+", 이번에도 잘 부탁해!",
     "우리는 서로를 장애물처럼 이용할 수 있어!",
     "부딪히면 바로 앞에서 멈추지!",
     "왜애애앵. 나는 펭이 좋은걸!"};
-    string[] bp_tutorial_stage_1 = {"첫 번째 튜토리얼이야!",
+
+    string[] bp_tutorial_stage_1 = new string[]
+        {"첫 번째 튜토리얼이야!",
     "어디보자…. ‘이동 조작’을 알아보는 튜토리얼이래!",
     "아니! 헤헤, 펭이 설명해 줄 거니까!",
     "으엑! 우리 못 만나는 거야?",
     "둘 다 청소해야 하는 거였어?",
     "(뜨끔), "+XMLManager.ins.itemDB.user.nickname+"! 나를 움직여 줘! 청소를 시작하자!",
     "손가락으로 화면을 스와이프하면 움직일 수 있어!"};
-    string[] bp_tutorial_stage_4 = {"와, 펭! 이번엔 2층이야! 어떻게 올라가지?",
+
+    string[] bp_tutorial_stage_4 = new string[]
+        {"와, 펭! 이번엔 2층이야! 어떻게 올라가지?",
     "날아서 올라갈 수는 없으려나?",
     "흐에엥, 내 동심을 지켜주란 말이야, 펭!",
     "어떻게?",
     "업어주는 거야, 펭?"};
-    string[] bp_tutorial_stage_5 = {"펭! 어디있어? 안 보여!",
+
+    string[] bp_tutorial_stage_5 = new string[]
+        {"펭! 어디있어? 안 보여!",
     "거기서 뭐해? 어서 내려와!",
     "정말! 어떻게 하지?",
     "업고 움직일 수도 있구나!",
@@ -172,23 +197,29 @@ public class TutorialManager : MonoBehaviour
     "실수해도 괜찮아, "+XMLManager.ins.itemDB.user.nickname+"!",
     "일시정지를 하고 처음부터 다시 시작할 수 있어!"};
 
-    string[] rp_tutorial_stage_3 = {"바보야, 다르잖아.",
+    string[] rp_tutorial_stage_3 = new string[]
+        {"바보야, 다르잖아.",
     "아까랑 다른 곳에서 시작하잖아.",
     "저기 가운데 튀어나온 곳이 까다롭겠는걸.",
     "맞아. "+XMLManager.ins.itemDB.user.nickname+", 잘 부탁해.",
     "우리를 잘 부딪혀서 해결해줘."
     };
-    string[] rp_tutorial_stage_2 = {"진정해 핑. 어차피 일 끝나고 같이 가잖아.",
+    string[] rp_tutorial_stage_2 = new string[]
+        {"진정해 핑. 어차피 일 끝나고 같이 가잖아.",
     "이 구역은 간단하네. 빨리 끝나겠어.",
     "너무 들러붙지는 말자는 거지.",
     "이러니까 말이야. 어서 일을 시작하자, "+XMLManager.ins.itemDB.user.nickname+"."};
-    string[] rp_tutorial_stage_1 = {"무슨 말인지 이해는 했니, 핑.",
+
+    string[] rp_tutorial_stage_1 = new string[]
+        {"무슨 말인지 이해는 했니, 핑.",
     "여기를 봐.",
     "그래. 각자의 구역은 알아서 청소하는 거야.",
     "그래. 너 설마 나 혼자 일 시키려는 거는 아니었겠지?",
     "다른 펭귄을 움직이고 싶으면, 교체 버튼을 눌러줘.",
     "대신 한 번에 한 마리씩 움직일 수 있어."};
-    string[] rp_tutorial_stage_4 = {"저기에 경사가 있네. 저기로 미끄러져 올라가자.",
+
+    string[] rp_tutorial_stage_4 = new string[]
+        {"저기에 경사가 있네. 저기로 미끄러져 올라가자.",
     "우리는 펭귄이야. 그것도 마쉬멜로우 함량 98%.",
     "단언컨데, 날 수 없지.",
     "날 수 없는 대신 우리는 서로를 업을 수 있어.",
@@ -196,7 +227,9 @@ public class TutorialManager : MonoBehaviour
     "네가 2층으로 올라갔다가….",
     "내 위로 미끄러져 올라오면 내가 너를 업을게.",
     "…. 빨리 업히기나 해."};
-    string[] rp_tutorial_stage_5 = {"여기, 2층에 있어.",
+
+    string[] rp_tutorial_stage_5 = new string[]
+        {"여기, 2층에 있어.",
     "바보야. 반대편에 치워야 하는 2층 언덕이 있잖아.",
     "….",
     "나를 업고 가야겠어, 핑.",
@@ -204,34 +237,42 @@ public class TutorialManager : MonoBehaviour
     "잘 부탁해 "+XMLManager.ins.itemDB.user.nickname+".",
     "떨어지면 다시 올라갈 수 없으니까."};
 
-    string[] bp_icecream = {"음, 달콤한 냄새. 베리랑 아이스크림이 가득하네.",
+    string[] bp_icecream = new string[]
+        {"음, 달콤한 냄새. 베리랑 아이스크림이 가득하네.",
     "여기가 피크닉 명소라던데.",
     "뭐라고 펭?",
     "응, 헤헤.",
     "여기는 마쉬멜로우 빌리지에서 배웠던 걸 활용해서",
     "쉽게 치울 수 있을 것 같아!",
     "응, 얼른 해보자! "+XMLManager.ins.itemDB.user.nickname+"!"};
-    string[] bp_parfait = {"와! 휴양지다! 파르페 섬에 꼭 와보고 싶었는데!",
+
+    string[] bp_parfait = new string[]
+        {"와! 휴양지다! 파르페 섬에 꼭 와보고 싶었는데!",
     "맞다, 그렇지!",
     "그래도 파르페 섬의 명물, 파르페는 먹어 보고 싶은데!",
     "헉! 그러면 어떻게 해? 파르페 못 먹는 거야?",
     "순서에 맞게?",
     "너무 어렵다. 나는 암기가 제일 싫어!",
     "그렇구나! "+XMLManager.ins.itemDB.user.nickname+", 청소를 시작해 볼까!"};
-    string[] bp_cracker = {"펭! 지금 그쪽으로 갈게!",
+
+    string[] bp_cracker = new string[]
+        {"펭! 지금 그쪽으로 갈게!",
     "뭐, 뭐라고?!",
     "어디가 위험한지는 어떻게 알아?",
     "다행이다.",
     "대신 바닥이 무너지면 더 이상 지나갈 수 없는 거네.",
     "알았지, "+XMLManager.ins.itemDB.user.nickname+"! 조심해서 다니자!"};
 
-    string[] rp_icecream = {"하지만 우리는 일 하러 온 거야. 핑.",
+    string[] rp_icecream = new string[]
+        {"하지만 우리는 일 하러 온 거야. 핑.",
     "(달콤해… 좋다….)",
     "일 하자고, 일.",
     "얼른 끝내고 싶어.",
     "아이스크림 때문에 온 몸이 끈적해지기 전에 말이야.",
     "(아이스크림 먹고싶다…)"};
-    string[] rp_parfait = {"정신 차려, 핑.",
+
+    string[] rp_parfait = new string[]
+        {"정신 차려, 핑.",
     "우린 여기 일하러 온 거잖아.",
     "그렇지 않아도 파르페 섬에서 연락이 왔어.",
     "눈보라 때문에 재료들이 죄다 설탕 결정에 갇혀버렸대.",
@@ -239,7 +280,9 @@ public class TutorialManager : MonoBehaviour
     "그 전까지는 장애물같이 단단해서 모을 수 없지만.",
     "컵 ▶ 아이스크림 ▶ 시럽 ▶ 과일 순서야.",
     "걱정하지 마. 위에 순서를 제대로 표시해줄 테니까."};
-    string[] rp_cracker = {"조심해! 바닥이 무너질 것 같아.",
+
+    string[] rp_cracker = new string[]
+        {"조심해! 바닥이 무너질 것 같아.",
     "휴…. 크래커 섬은 워낙 오래된 곳이라",
     "바닥이 무너질 위험이 커. 조심히 다니자.",
     "바닥을 잘 보고 다녀야지.",
@@ -248,6 +291,7 @@ public class TutorialManager : MonoBehaviour
     "금이 많이 간 크래커는 한 번만 지나가도 무너져버려.",
     "무너지더라도 걱정 마, 떨어지진 않으니까."};
 
+    #endregion
 
     bool trigger = false; // false is left turn
     public List<Progress> progresses = new List<Progress>();
@@ -592,12 +636,12 @@ public class TutorialManager : MonoBehaviour
             if(progresses[now_count].target_text == rpText)
             {
                 Debug.Log("rp said : ");
-                uiController.ChangeCharacter(rpPlayer);
+                uiController.ChangeCharacter(1);
             }
             else
             {
                 Debug.Log("bp said : ");
-                uiController.ChangeCharacter(bpPlayer);
+                uiController.ChangeCharacter(2);
             }
             yield return StartCoroutine(TextingStage(progresses[now_count]));
             yield return StartCoroutine(Waiting());

@@ -8,7 +8,44 @@ using Amazon.CognitoIdentity;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 
+[DynamoDBTable("PingPengBoong")]
+public class PingPengBoong
+{
+    [DynamoDBHashKey] public int version { get; set; } // 0
+    [DynamoDBProperty] public List<string> user { get; set; } //user list
+    [DynamoDBProperty] public List<string> editorMap { get; set; } // editor map list
+}
 
+[DynamoDBTable("Friend")]
+public class Friend
+{
+    [DynamoDBHashKey] public string nickname { get; set; }
+    [DynamoDBProperty] public Dictionary<string, int> friends { get; set; }
+    [DynamoDBProperty] public List<string> send { get; set; }
+    [DynamoDBProperty] public List<string> receive { get; set; }
+}
+
+[DynamoDBTable("EditorMap")]
+public class EditorMap
+{
+    [DynamoDBHashKey] public string map_id { get; set; }
+    [DynamoDBProperty] public string maker { get; set; }
+    [DynamoDBProperty] public string title { get; set; }
+    [DynamoDBProperty] public string make_time { get; set; }
+    [DynamoDBProperty] public int play_count { get; set; }
+    [DynamoDBProperty] public int like { get; set; }
+
+    [DynamoDBProperty] public int height { get; set; }
+    [DynamoDBProperty] public int width { get; set; }
+    [DynamoDBProperty] public string datas { get; set; } //List 형태 //(가로 * 세로) 개
+    [DynamoDBProperty] public string styles { get; set; } //List 형태 // 3개가 한묶음 (가로 * 세로 * 3) 개
+    
+    [DynamoDBProperty] public bool isParfait { get; set; }
+
+    [DynamoDBProperty] public List<int> star_limit { get; set; }
+    [DynamoDBProperty] public int step { get; set; }
+    [DynamoDBProperty] public int level { get; set; }
+}
 
 [DynamoDBTable("UserInfo")]
 public class User
@@ -19,9 +56,9 @@ public class User
     [DynamoDBProperty]public int heart_time {get; set;} // 하트 충전 타이머
     [DynamoDBProperty]public int current_stage {get; set;} // 유저가 깨야하는 스테이지
     [DynamoDBProperty]public string log_out {get; set;} //로그 아웃 시간 yyyy/MM/dd HH:mm
-    [DynamoDBProperty]public List<int> star_list { get; set; } // 별 갯수
-    [DynamoDBProperty]public List<int> move_list { get; set; }
-    [DynamoDBProperty]public List<int> reward_list { get; set; }
+    [DynamoDBProperty]public string star_list { get; set; } // 별 갯수 = List
+    [DynamoDBProperty]public string move_list { get; set; } // 움직인 횟수 = List
+    [DynamoDBProperty]public List<int> reward_list { get; set; } // Set
 
 
     [DynamoDBProperty] public int ping_skin_num { get; set; }//캐릭터 1 스킨착용 기본 검은색
@@ -35,12 +72,14 @@ public class User
     [DynamoDBProperty] public List<int> myStyleList { get; set; } // 보유 칭호 번호 리스트
 
     [DynamoDBProperty] public int drop_count { get; set; }
+    [DynamoDBProperty] public int crash_count { get; set; }
     [DynamoDBProperty] public int carry_count { get; set; }
     [DynamoDBProperty] public int reset_count { get; set; }
     [DynamoDBProperty] public int move_count { get; set; }
     [DynamoDBProperty] public int snow_count { get; set; }
     [DynamoDBProperty] public int parfait_done_count { get; set; }
     [DynamoDBProperty] public int crack_count { get; set; }
+    [DynamoDBProperty] public int cloud_count { get; set; }
 
     [DynamoDBProperty] public int editor_make_count { get; set; }
     [DynamoDBProperty] public int editor_clear_count { get; set; }
@@ -51,6 +90,10 @@ public class User
     [DynamoDBProperty] public int skin_count { get; set; }
 
     [DynamoDBProperty] public long playTime { get; set; }
+    [DynamoDBProperty] public int clear_count { get; set; }
+    [DynamoDBProperty] public int fail_count { get; set; }
+
+
     [DynamoDBProperty] public bool facebook { get; set; }
 }
 
@@ -83,14 +126,19 @@ public class AWSManager : MonoBehaviour
 
     public delegate void LoadUserCallback(bool isLoad);
     public delegate void CreateUserCallback(bool success);
-    
-    string id;
+
+    public delegate void BooleanCallback(bool callback);
+
+   
     public User user;
-    bool isPaused = false;
+    public PingPengBoong pingPengBoong;
+    public Friend friend;
+    public GameObject loadingPopup;
+
 
     void Awake()
     {
-        Debug.Log("Single Class Awake..." + DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));//Set instance
+        
         if (instance == null)
         {
             Debug.Log("Single instance is null");
@@ -137,6 +185,52 @@ public class AWSManager : MonoBehaviour
         Credentials.AddLogin ("graph.facebook.com", token);
     }
 
+    public void LoadAllUsers()
+    {
+        dbContext.LoadAsync<PingPengBoong>(0,(AmazonDynamoDBResult <PingPengBoong> result) =>{
+            if (result.Exception != null)
+            {
+                Debug.LogException(result.Exception);
+               
+            }
+            else
+            {
+                pingPengBoong = result.Result;
+            }
+        });
+
+
+    }
+
+    public void Load_FriendList()
+    {
+        dbContext.LoadAsync<Friend>(0, (AmazonDynamoDBResult<Friend> result) => {
+            if (result.Exception != null)
+            {
+                Debug.LogException(result.Exception);
+
+            }
+            else
+            {
+                friend = result.Result;
+            }
+        });
+    }
+
+    public void Load_EditorMap()
+    {
+        dbContext.LoadAsync<Friend>(0, (AmazonDynamoDBResult<Friend> result) => {
+            if (result.Exception != null)
+            {
+                Debug.LogException(result.Exception);
+
+            }
+            else
+            {
+                friend = result.Result;
+            }
+        });
+    }
    
     public void Load_UserInfo(LoadUserCallback callback) //DB에서 캐릭터 정보 받기
     {
@@ -163,9 +257,102 @@ public class AWSManager : MonoBehaviour
             }
             
         });
+
+
        
 
     }
+    public void CreateEditorMap(Map map , int moveCount,int dif , BooleanCallback callback)
+    {
+        List<int> dynamoDB_datas = new List<int>();
+        for (int i = 0; i < map.datas.Count; i++)
+        {
+            for(int j = 0; j < map.datas[i].Count; j++)
+            {
+                dynamoDB_datas.Add(map.datas[i][j]);
+            }
+
+           
+        }
+
+        List<int> dynamoDB_styles = new List<int>();
+        for (int i = 0; i < map.styles.Count; i++)
+        {
+            for (int j = 0; j < map.styles[i].Count; j++)
+            {
+                dynamoDB_styles.Add(map.styles[i][j]);
+            }
+
+
+        }
+
+        EditorMap editorMap = new EditorMap
+        {
+            /*
+            [DynamoDBHashKey] public string map_id { get; set; }
+            [DynamoDBProperty] public string maker { get; set; }
+            [DynamoDBProperty] public string title { get; set; }
+            [DynamoDBProperty] public string make_time { get; set; }
+            [DynamoDBProperty] public int play_count { get; set; }
+            [DynamoDBProperty] public int like { get; set; }
+
+            [DynamoDBProperty] public int height { get; set; }
+            [DynamoDBProperty] public int width { get; set; }
+            [DynamoDBProperty] public List<List<int>> datas { get; set; }
+            [DynamoDBProperty] public List<List<List<int>>> styles { get; set; }
+
+            [DynamoDBProperty] public bool isParfait { get; set; }
+            */
+
+        
+
+            map_id = GameManager.instance.user_aws.nickname + " " + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            //map_id = map.map_title,
+            maker = GameManager.instance.user_aws.nickname,
+            title = map.map_title,
+            make_time = DateTime.Now.ToString("yyyyMMddHHmmss"),
+            play_count = 0,
+            like = 0,
+
+            height = map.mapsizeH,
+            width = map.mapsizeW,
+
+            
+            datas = Parser.ListToString(dynamoDB_datas),
+            styles = Parser.ListToString(dynamoDB_styles),
+
+            isParfait = map.parfait,
+
+            step = moveCount,
+            level = dif,
+            star_limit = new List<int>() { moveCount, moveCount * 2, moveCount * 3 }
+
+             
+
+        };
+
+        dbContext.SaveAsync(editorMap, (result) => {
+            if (result.Exception == null)
+            {
+                //this = user;
+
+                Debug.Log("Success saved editormap");
+                callback(true);
+
+            }
+            else
+            {
+                Debug.LogWarning("EditorMap Save Exception : " + result.Exception);
+                callback(false);
+            }
+
+
+        });
+
+
+
+    }
+
     public void Create_FacebookToken(string id , string nick)
     {
         FacebookUser facebookUser = new FacebookUser
@@ -204,8 +391,8 @@ public class AWSManager : MonoBehaviour
             current_stage = 0,
             log_out = DateTime.Now.ToString("yyyyMMddHHmmss"),
             heart_time = 600, // 10분
-            star_list = new List<int> { 0 },
-            move_list = new List<int> { 0 },
+            star_list = "0",
+            move_list = "0",
             reward_list = new List<int>(),
 
             ping_skin_num = 0,//캐릭터 1 스킨착용 기본 검은색
@@ -219,12 +406,14 @@ public class AWSManager : MonoBehaviour
             myStyleList = new List<int> { 0},// 보유 칭호 번호 리스트 --> 0은 없D
 
             drop_count =0,
+            crash_count = 0,
             carry_count =0,
             reset_count = 0,
             move_count = 0,
             snow_count = 0,
             parfait_done_count = 0,
             crack_count = 0,
+            cloud_count = 0,
 
             editor_make_count = 0,
             editor_clear_count = 0,
@@ -235,6 +424,9 @@ public class AWSManager : MonoBehaviour
             skin_count = 0,
 
             playTime = 0,
+            clear_count = 0,
+            fail_count = 0,
+
             facebook = isAuth
 
         };
@@ -299,5 +491,8 @@ public class AWSManager : MonoBehaviour
         });
     }
     
-
+    public void ConnectWithAWS(bool connect)
+    {
+        loadingPopup.SetActive(!connect);
+    }
 }

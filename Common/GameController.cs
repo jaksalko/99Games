@@ -180,7 +180,6 @@ public class GameController : MonoBehaviour
 
     }
 
-
     public void MakeUndoCommand()   // press undo btn -> make undo command
     {
         if (!nowPlayer.Moving() && isPlaying)
@@ -281,8 +280,29 @@ public class GameController : MonoBehaviour
 
         snow_remain = RemainCheck();
 
-        //캐릭터 배치 (active)
-        player1.SetPosition(
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        for (int i = 0; i < players.Length; i++)
+        {
+            Player player = players[i].GetComponent<Player>();
+            player.enabled = true;
+
+            if (player1 == null)
+            {
+                player1 = player;
+                nowPlayer = player;
+            }
+            else
+            {
+                player2 = player;
+                player1.other = player;
+                player2.other = player1;
+            }
+        }
+
+
+
+            //캐릭터 배치 (active)
+            player1.SetPosition(
            startpos: map.startPositionA);
 
         player2.SetPosition(
@@ -290,9 +310,7 @@ public class GameController : MonoBehaviour
 
 
 
-        player1.gameObject.SetActive(true);
-        player2.gameObject.SetActive(true);
-
+        
 
         //카메라 활성화
         cameraController.gameObject.SetActive(true);
@@ -363,6 +381,7 @@ public class GameController : MonoBehaviour
         }
         ui.inGame.SetActive(true);
 
+        /*
 
         //if tutorial mode active tutorial!
         if(PlayerPrefs.GetInt("tutorial",0) == 0)
@@ -370,23 +389,24 @@ public class GameController : MonoBehaviour
             tutorialManager.gameObject.SetActive(true);
         }
         
-            if(gameManager.userInfo.current_stage == IslandData.tutorial+1 && gameManager.nowLevel == IslandData.tutorial+1)//ice 1
-            {
-                tutorialManager.gameObject.SetActive(true);
-            }
-            else if(gameManager.userInfo.current_stage == IslandData.iceCream+1 && gameManager.nowLevel == IslandData.iceCream+1)//beach 1
-            {
-                tutorialManager.gameObject.SetActive(true);
-            }
-            else if(gameManager.userInfo.current_stage == IslandData.beach+1 && gameManager.nowLevel == IslandData.beach+1)//cracker 1
-            {
-                tutorialManager.gameObject.SetActive(true);
-            }
-            else if(gameManager.userInfo.current_stage == IslandData.cracker+1 && gameManager.nowLevel == IslandData.cracker+1)//cotton 1
-            {
-                tutorialManager.gameObject.SetActive(true);
-            }
-        
+        if(gameManager.userInfo.current_stage == IslandData.tutorial+1 && gameManager.nowLevel == IslandData.tutorial+1)//ice 1
+        {
+            tutorialManager.gameObject.SetActive(true);
+        }
+        else if(gameManager.userInfo.current_stage == IslandData.iceCream+1 && gameManager.nowLevel == IslandData.iceCream+1)//beach 1
+        {
+            tutorialManager.gameObject.SetActive(true);
+        }
+        else if(gameManager.userInfo.current_stage == IslandData.beach+1 && gameManager.nowLevel == IslandData.beach+1)//cracker 1
+        {
+            tutorialManager.gameObject.SetActive(true);
+        }
+        else if(gameManager.userInfo.current_stage == IslandData.cracker+1 && gameManager.nowLevel == IslandData.cracker+1)//cotton 1
+        {
+            tutorialManager.gameObject.SetActive(true);
+        }
+
+        */
             
     }
 
@@ -472,7 +492,7 @@ public class GameController : MonoBehaviour
         }
         else if (editorMode)//mapLoader.editorMap 생성하기
         {
-            //??
+            
         }
         else//stage mode
         {
@@ -550,11 +570,11 @@ public class GameController : MonoBehaviour
 
         if(success)
         {
-            gameManager.userInfo.clearCount++;
+            gameManager.userInfo.clear_count++;
         }
         else
         {
-            gameManager.userInfo.failCount++;
+            gameManager.userInfo.fail_count++;
         }
 
         //update and save xml data

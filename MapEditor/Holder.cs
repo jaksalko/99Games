@@ -21,7 +21,7 @@ public class Holder : MonoBehaviour
 
     public void SetParent(GameObject obj)
     {
-        obj.transform.position += transform.position;
+        
         obj.transform.SetParent(transform);
     }
 }

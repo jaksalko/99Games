@@ -16,35 +16,21 @@ public class Block : MonoBehaviour , IBlock
         Cracked,
         broken,
         Cloud,
-        Outline
+        Outline,
+        Character
     };
 
-	public int Data { get; set; }
-    public bool Snow { get; set; }
-    public virtual void Init(int block_num)
+    public int style; // 0 : 튜토리얼 1 : 아이스크림 2 : 파르페 3 : 크래커 4 : 솜사탕 5 : 에디터
+    public GameObject[] object_styles;
+
+    public int data { get; set; }
+    
+
+    public virtual void Init(int block_num , int style)
     {
-        Data = block_num;
-        if((block_num == BlockNumber.normal && transform.position.y == -0.5f) || (block_num == BlockNumber.upperNormal && transform.position.y == 0.5f))
-        {
-            Snow = true;
-        }
-        else
-        {
-            Snow = false;
-        }
+        data = block_num;
+        this.style = style;
     }
 
-    public bool IsSnow()
-    {
-        if(Snow)
-        {
-            Snow = false;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-        //throw new System.NotImplementedException();
-    }
+    
 }

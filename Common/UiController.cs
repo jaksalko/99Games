@@ -154,11 +154,21 @@ public class UiController : UIScript
     }
 
 
-    public void ChangeCharacter(Player player)
+    public void ChangeCharacter(int player_num)
     {
         GameController instance = GameController.instance;
 
         Player now = instance.nowPlayer;
+
+        Player player;
+        if(player_num == 1)
+        {
+            player = instance.player1;
+        }
+        else
+        {
+            player = instance.player2;
+        }
 
         if(!now.Moving())
         {

@@ -8,8 +8,10 @@ public class Snow : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.CompareTag("Leg"))
+
+        if(other.gameObject.CompareTag("Leg") || other.gameObject.CompareTag("Player"))
         {
+            Debug.Log("clear");
             if(particle != null)
                 particle.Play();
 			gameObject.SetActive(false);

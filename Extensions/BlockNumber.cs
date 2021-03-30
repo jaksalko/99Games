@@ -19,18 +19,20 @@ static class BlockNumber
         upperCracker_0 = 15, upperCracker_1 = 16, upperCracker_2 = 17,
         upperBroken = 18,//upperCracker_3
 
+        character = 20,
+
         parfaitA = 21, parfaitB = 22, parfaitC = 23, parfaitD = 24,
         slopeUp = 25, slopeRight = 26, slopeDown = 27, slopeLeft = 28,
         obstacle = 29,
 
         //character
-        character = 20, upperCharacter = 30,
+        upperCharacter = 30,
 
         //2층 블럭
         upperParfaitA = 31, upperParfaitB = 32, upperParfaitC = 33, upperParfaitD = 34,
-        upperObstacle = 39,
+        upperObstacle = 39;
 
-        characterA = 40, characterB = 41;
+        
 
     public static int[] firstlevel = new int[4] { normal, cracker_0, cracker_1, cracker_2 };
     public static int[] secondLevel = new int[4] { upperNormal, upperCracker_0, upperCracker_1, upperCracker_2 };

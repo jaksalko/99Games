@@ -12,7 +12,8 @@ public class MapLoader : MonoBehaviour
 
     //public int[,] map; // sampleMap에 있음
     //public bool[,] check; // 생성하며 구현
-    
+    BlockFactory blockFactory;
+    int style;
 
     [Header("Block Type")]
     public GroundBlock groundBlock;
@@ -62,6 +63,8 @@ public class MapLoader : MonoBehaviour
     void Start()
     {
         csvManager = CSVManager.instance;
+        
+
     }
    
     void MakeMap(int mapsizeH , int mapsizeW , bool parfait)
@@ -84,10 +87,11 @@ public class MapLoader : MonoBehaviour
        
 
         MakeGround(mapsizeH,mapsizeW);//block into map object block list
-        
+
+        /*
         if (parfait)
             MakeParfait(mapsizeH, mapsizeW);
-
+        */
         
        
         
@@ -102,7 +106,7 @@ public class MapLoader : MonoBehaviour
             case Block.Type.Outline:
                 GroundBlock outline = Instantiate(groundBlock , pos_ , groundBlock.transform.rotation);
                 outline.gameObject.SetActive(visible);                
-                outline.Init(blockData);
+                outline.Init(blockData, 0 );
                 outline.transform.parent = obstacleParent;
                 newBlock = outline;
 
@@ -111,8 +115,8 @@ public class MapLoader : MonoBehaviour
             case Block.Type.Ground:
                 GroundBlock ground = Instantiate(groundBlock, pos_, groundBlock.transform.rotation);
                 ground.gameObject.SetActive(visible);                
-                ground.Init(blockData);
-                ground.IsNormal(ground.Snow);//active snow object
+                ground.Init(blockData , 0);
+               
                 ground.transform.parent = groundParent;
 
                 newBlock = ground;
@@ -121,8 +125,8 @@ public class MapLoader : MonoBehaviour
             case Block.Type.SecondGround:
                 GroundBlock second = Instantiate(groundBlock_second, pos_, groundBlock.transform.rotation);
                 second.gameObject.SetActive(visible);
-                second.Init(blockData);
-                second.IsNormal(second.Snow);//active snow object
+                second.Init(blockData, 0);
+               
                 second.transform.parent = groundParent;
 
                 newBlock = second;
@@ -131,7 +135,7 @@ public class MapLoader : MonoBehaviour
             case Block.Type.Obstacle:
                 ObstacleBlock obstacle = Instantiate(obstacleBlock,obstacleBlock.transform.position +  pos_, obstacleBlock.transform.rotation);
                 obstacle.gameObject.SetActive(visible);
-                obstacle.Init(blockData);
+                obstacle.Init(blockData, 0);
                 obstacle.transform.parent = obstacleParent;
 
                 newBlock = obstacle;
@@ -140,7 +144,7 @@ public class MapLoader : MonoBehaviour
             case Block.Type.Slope:
                 SlopeBlock slope = Instantiate(slopeBlock, pos_, Quaternion.Euler(new Vector3(0, 90 * (blockData - BlockNumber.slopeUp), 0)));
                 slope.gameObject.SetActive(visible);
-                slope.Init(blockData);
+                slope.Init(blockData, 0);
                 slope.transform.parent = groundParent;
 
                 newBlock = slope;
@@ -159,7 +163,7 @@ public class MapLoader : MonoBehaviour
             case Block.Type.Cloud:
                 CloudBlock cloud = Instantiate(cloudBlock, pos_, Quaternion.Euler(new Vector3(0, 90*(blockData%10), 90)));
                 cloud.gameObject.SetActive(visible);
-                cloud.Init(blockData);
+                cloud.Init(blockData, 0);
                 cloud.transform.parent = groundParent;
 
                 newBlock = cloud;
@@ -168,7 +172,7 @@ public class MapLoader : MonoBehaviour
             case Block.Type.Cracked:
                 CrackedBlock cracked = Instantiate(crackedBlock, pos_, Quaternion.identity);
                 cracked.gameObject.SetActive(visible);
-                cracked.Init(blockData);
+                cracked.Init(blockData, 0);
                 
                 cracked.transform.parent = groundParent;
 
@@ -178,7 +182,7 @@ public class MapLoader : MonoBehaviour
             case Block.Type.broken:
                 CrackedBlock broken = Instantiate(crackedBlock, pos_, Quaternion.identity);
                 broken.gameObject.SetActive(visible);
-                broken.Init(blockData);
+                broken.Init(blockData, 0);
                 broken.transform.parent = obstacleParent;
 
                 newBlock = broken;
@@ -211,10 +215,55 @@ public class MapLoader : MonoBehaviour
 
 
     }
-    
+
     void MakeGround(int mapsizeH, int mapsizeW)
     {
-        
+        blockFactory = BlockFactory.instance;
+
+
+        for (int i = 0; i < mapsizeH; i++)
+        {
+            for (int j = 0; j < mapsizeW; j++)
+            {
+                
+
+                int data = liveMap.datas[i][j];
+
+                if (i ==0 || i == mapsizeH - 1)
+                {
+                    data = BlockNumber.broken;
+                }
+                else if(j == 0 || j == mapsizeW-1)
+                {
+                    data = BlockNumber.broken;
+                }
+
+                int style_num = i * mapsizeW + j;
+                Block newBlock = blockFactory.CreateBlock(data, liveMap.styles[style_num], new Vector2(j, i));
+                //Debug.Log(j + "," + i + " : " + newBlock.data);
+
+
+                liveMap.SetBlocks(j, i, newBlock);
+                if (newBlock.data == BlockNumber.normal || newBlock.data == BlockNumber.upperNormal)
+                {
+                    liveMap.UpdateCheckArray(j, i, false);
+                }
+                else if(newBlock.data >= BlockNumber.parfaitA && newBlock.data <= BlockNumber.parfaitD)
+                {
+                    liveMap.UpdateCheckArray(j, i, false);
+                }
+                else if (newBlock.data >= BlockNumber.upperParfaitA && newBlock.data <= BlockNumber.upperParfaitD)
+                {
+                    liveMap.UpdateCheckArray(j, i, false);
+                }
+                else
+                {
+                    liveMap.UpdateCheckArray(j, i, true);
+                }
+            }
+        }
+    }
+        /*
         SetOutlineBlock(mapsizeH, mapsizeW);
         
         for (int i = 1; i < mapsizeH-1; i++)//z
@@ -275,7 +324,7 @@ public class MapLoader : MonoBehaviour
                     //character???
                     liveMap.SetBlocks(j, i, MakeBlock(Block.Type.SecondGround, BlockNumber.upperCharacter, new Vector3(j, 0.5f, i), visible: true, isCheck: false));
 
-                    /*if (liveMap.startPositionA.z == i && liveMap.startPositionA.x == j && liveMap.startUpstairA)
+                    if (liveMap.startPositionA.z == i && liveMap.startPositionA.x == j && liveMap.startUpstairA)
                     {
                         Debug.Log("char A : " + i + "," + j);
                         GroundBlock second_ground = Instantiate(groundBlock_second, new Vector3(j, 0.5f, i), groundBlock_second.transform.rotation);
@@ -286,7 +335,7 @@ public class MapLoader : MonoBehaviour
                         Debug.Log("char B : " + i + "," + j);
                         GroundBlock second_ground = Instantiate(groundBlock_second, new Vector3(j, 0.5f, i), groundBlock_second.transform.rotation);
                         second_ground.transform.parent = groundParent;
-                    }*/
+                    }
                 }
                 else if(blockData >= BlockNumber.slopeUp && blockData <= BlockNumber.slopeLeft)
                 {
@@ -311,7 +360,8 @@ public class MapLoader : MonoBehaviour
                
             }
         }
-    }
+        */
+    
 
 
     void MakeParfait(int mapsizeH, int mapsizeW)
@@ -322,7 +372,7 @@ public class MapLoader : MonoBehaviour
         {
             for (int j = 0; j < mapsizeW; j++)
             {
-                int blockData = liveMap.lines[i].line[j];
+                int blockData = liveMap.datas[i][j];
                 int sequence = (blockData % 10) - 1;
                 if (blockData >= BlockNumber.parfaitA && blockData <= BlockNumber.parfaitD)
                 {
@@ -330,7 +380,7 @@ public class MapLoader : MonoBehaviour
                     parfaitBlock[sequence].gameObject.SetActive(true);
                     parfaitBlock[sequence].gameObject.transform.position = new Vector3(j, 0.5f, i);
                     
-                    parfaitBlock[sequence].Init(blockData);
+                    parfaitBlock[sequence].Init(blockData, 0);
                     
                     parfait_sequence++;
                  
@@ -343,7 +393,7 @@ public class MapLoader : MonoBehaviour
                     parfaitBlock[sequence].gameObject.SetActive(true);
                     parfaitBlock[sequence].gameObject.transform.position = new Vector3(j, 1.5f, i);
 
-                    parfaitBlock[sequence].Init(blockData);
+                    parfaitBlock[sequence].Init(blockData, 0);
 
                     
                     parfait_sequence++;
@@ -359,7 +409,7 @@ public class MapLoader : MonoBehaviour
             }
         }
     }
-
+//스테이지 모드
     public Map GenerateMap(int index)//index == gameManager.nowLevel
     {
         
@@ -369,7 +419,6 @@ public class MapLoader : MonoBehaviour
             Debug.Log(csvManager);
             Debug.Log(csvManager.islands[0].maps[index]);
             liveMap = csvManager.islands[0].maps[index];
-            liveMap.init();
 
 
         }
@@ -394,7 +443,7 @@ public class MapLoader : MonoBehaviour
             Debug.Log("cotton :" + (index - len));
             liveMap = csvManager.islands[4].maps[index-len];
         }
-        liveMap.init();
+
         liveMap.gameObject.SetActive(true);
 
         //sample[index].init();
@@ -406,17 +455,19 @@ public class MapLoader : MonoBehaviour
 
         //return MakeMap(liveMap.mapsizeH, liveMap.mapsizeW, liveMap.parfait);
     }
-    public Map EditorMap()
+    //에디터 모드
+    public Map EditorMap()//내가 먼든 먑
     {
         liveMap = editorMap;
         liveMap.gameObject.SetActive(true);
 
-        MakeMap(editorMap.mapsizeH, editorMap.mapsizeW, editorMap.parfait);
-        return editorMap;
+        MakeMap(liveMap.mapsizeH, liveMap.mapsizeW, liveMap.parfait);
+        return liveMap;
     }
-    public Map CustomPlayMap()
+    //에디터 프레이모드
+    public Map CustomPlayMap()//다른 유저가 만든 
     {
-        editorMap.Initialize(GameManager.instance.playCustomData.itemdata);
+        //editorMap.Initialize(GameManager.instance.playCustomData.itemdata);
         liveMap = editorMap;
         liveMap.gameObject.SetActive(true);
 
@@ -449,7 +500,7 @@ public class MapLoader : MonoBehaviour
            
             JsonData selectedData = datas[Random.Range(0, datas.Length)];
 
-            editorMap.Initialize(selectedData);
+            //editorMap.Initialize(selectedData);
             Debug.Log(editorMap.mapsizeH + "," + editorMap.mapsizeW + "," + editorMap.startPositionA);
             liveMap = editorMap;
             callback(liveMap);

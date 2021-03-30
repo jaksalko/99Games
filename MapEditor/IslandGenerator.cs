@@ -27,7 +27,7 @@ public class IslandGenerator : MonoBehaviour
     {
 
         splitToInt.Clear();
-        sample.lines.Clear();
+      
         sample.mapsizeH = (int)maxSize.y;
         sample.mapsizeW = (int)maxSize.x;
 
@@ -86,11 +86,11 @@ public class IslandGenerator : MonoBehaviour
 
                     case BlockNumber.character://27
                         sample.startPositionA = new Vector3(x, 0, z);
-                        sample.startUpstairA = false;
+                        
                         break;
                     case BlockNumber.upperCharacter://38
                         sample.startPositionA = new Vector3(x, 1, z);
-                        sample.startUpstairA = true;
+                        
                         break;
 
 
@@ -103,11 +103,11 @@ public class IslandGenerator : MonoBehaviour
                 {
                     case BlockNumber.character://27
                         sample.startPositionB = new Vector3(x, 0, z);
-                        sample.startUpstairB = false;
+                        
                         break;
                     case BlockNumber.upperCharacter://38
                         sample.startPositionB = new Vector3(x, 1, z);
-                        sample.startUpstairB = true;
+                       
                         break;
 
 

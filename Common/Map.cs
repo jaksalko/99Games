@@ -21,18 +21,9 @@ public class Map : MonoBehaviour, IMap
     public Vector3 startPositionA;//    y축 -9 : 1 층 , -8 : 2층 
     public Vector3 startPositionB;
 
-    public bool startUpstairA = false;
-    public bool startUpstairB = false;
 
-    [Serializable]
-    public class Line
-    {
-        public List<int> line = new List<int>();
-    }
-
-    public List<Line> lines = new List<Line>();
-
-    public int[,] map;//not use this variable
+    public List<List<int>> datas;
+    public List<List<int>> styles;
     public bool[,] check;
 
     Block[,] blocks;
@@ -54,7 +45,9 @@ public class Map : MonoBehaviour, IMap
         
     }
 
-    public Map(Vector2 size, bool isParfait, Vector3 posA, Vector3 posB, int[,] datas, List<int> star_limit)//로더에서 생성
+   
+
+    public void Initialize(Vector2 size, bool isParfait, Vector3 posA, Vector3 posB, List<List<int>> datas, List<List<int>> styles, List<int> star_limit)
     {
         mapsizeH = (int)size.x;
         mapsizeW = (int)size.y;
@@ -62,36 +55,15 @@ public class Map : MonoBehaviour, IMap
         startPositionA = posA;
         startPositionB = posB;
 
-        startUpstairA = startPositionA.y > 0 ? true : false;//안쓸거임
-        startUpstairB = startPositionB.y > 0 ? true : false;//안쓸거임
 
         this.star_limit = star_limit;
 
-        map = datas;//안쓸거임
-        MapToLine();
-        //blocks = new Block[mapsizeH, mapsizeW];//로더의 MakeGround에서 채워짐
-        //check = new bool[mapsizeH, mapsizeW];//마찬가지
-        //check?
-
+        this.datas = datas;
+        this.styles = styles;
+        if(map_title == null)
+            map_title = GameManager.instance.user_aws.nickname + " " + DateTime.Now.ToString("yyyyMMddHHmmss");
     }
-
-    public void Initialize(Vector2 size, bool isParfait, Vector3 posA, Vector3 posB, int[,] datas, List<int> star_limit)
-    {
-        mapsizeH = (int)size.x;
-        mapsizeW = (int)size.y;
-        parfait = isParfait;
-        startPositionA = posA;
-        startPositionB = posB;
-
-        startUpstairA = startPositionA.y > 0 ? true : false;//안쓸거임
-        startUpstairB = startPositionB.y > 0 ? true : false;//안쓸거임
-
-        this.star_limit = star_limit;
-
-        map = datas;//안쓸거임
-        MapToLine();
-    }
-
+    /*
     public void Initialize(JsonData map)
     {
         mapsizeH = map.height;
@@ -118,10 +90,10 @@ public class Map : MonoBehaviour, IMap
         this.map = datas;
         MapToLine();
     }
+    */
 
 
-
-
+    /*
     public void LineToMap()
     {
         map = new int[mapsizeH, mapsizeW];
@@ -134,8 +106,10 @@ public class Map : MonoBehaviour, IMap
         }
 
     }
+    */
 
-    public void MapToLine()
+    /*
+    public void MapToLine(int[,] datas)
     {
         int dataCount = mapsizeH * mapsizeW;
         for (int i = 0; i < mapsizeH; i++)
@@ -145,17 +119,14 @@ public class Map : MonoBehaviour, IMap
             lines.Add(newLine);
             for (int j = 0; j < mapsizeW; j++)
             {
-                lines[i].line.Add(map[i, j]);
+                lines[i].line.Add(datas[i, j]);
             }
         }
     }
+    */
 
 
-
-    public virtual void init()
-    {
-        LineToMap();
-    }
+    
 
 
     bool isEndGame()
@@ -179,11 +150,11 @@ public class Map : MonoBehaviour, IMap
     {
         switch (floor)
         {
-            case 0:
-                return BlockNumber.GetDownstairThroughBlock(getDirection, onCloud);
             case 1:
-                return BlockNumber.GetUpstairThroughBlock(getDirection, onCloud);
+                return BlockNumber.GetDownstairThroughBlock(getDirection, onCloud);
             case 2:
+                return BlockNumber.GetUpstairThroughBlock(getDirection, onCloud);
+            case 3:
                 return BlockNumber.GetThirdFloorThroughBlock(getDirection, onCloud);
                 
 
@@ -195,11 +166,11 @@ public class Map : MonoBehaviour, IMap
     {
         switch (floor)
         {
-            case 0:
-                return BlockNumber.GetDownstairStopBlock(getDirection, onCloud);
             case 1:
-                return BlockNumber.GetUpstairStopBlock(getDirection, onCloud);
+                return BlockNumber.GetDownstairStopBlock(getDirection, onCloud);
             case 2:
+                return BlockNumber.GetUpstairStopBlock(getDirection, onCloud);
+            case 3:
                 return BlockNumber.GetThirdFloorStopBlock(getDirection, onCloud);
 
         }
@@ -229,11 +200,11 @@ public class Map : MonoBehaviour, IMap
 
         switch (floor)
         {
-            case 0:
+            case 1:
                 if (next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
                 {
                     //change block data parfait to normal
-                    blocks[posZ + step[direction, 0], posX + step[direction, 1]].Data = BlockNumber.normal; //pos 위치가 아닌 한칸 이동한 위치ㄹ
+                    blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.normal; //pos 위치가 아닌 한칸 이동한 위치ㄹ
 					//parfaitorder++;
 					GameController.ParfaitOrder++;
 
@@ -288,10 +259,10 @@ public class Map : MonoBehaviour, IMap
                     return true;
                 }
 
-            case 1:
+            case 2:
                 if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)
                 {
-                    blocks[posZ + step[direction, 0], posX + step[direction, 1]].Data = BlockNumber.upperNormal;
+                    blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.upperNormal;
 					GameController.ParfaitOrder++;
 
                     return true;
@@ -349,7 +320,7 @@ public class Map : MonoBehaviour, IMap
                     return true;
                 }
 
-            case 2://2층에서는 through 로 들어올 수 없음.?
+            case 3://2층에서는 through 로 들어올 수 없음.?
                 if (next >= BlockNumber.cloudUp && next <= BlockNumber.cloudLeft)
                 {
                     
@@ -397,8 +368,8 @@ public class Map : MonoBehaviour, IMap
         int posX = (int)pos.x;
         int posZ = (int)pos.z;
 
-        //blocks[posZ, posX].Data = player.temp;//이거 문제임 한번만 불려야 하는데... player.cs 151 line
-//        Debug.Log((posZ + step[direction, 0]) + "," + (posX + step[direction, 1]) + " DATA : " + GetBlockData(x: posX + step[direction, 1], z: posZ + step[direction, 0]));
+        //blocks[posZ, posX].data = player.temp;//이거 문제임 한번만 불려야 하는데... player.cs 151 line
+//        Debug.Log((posZ + step[direction, 0]) + "," + (posX + step[direction, 1]) + " data : " + GetBlockdata(x: posX + step[direction, 1], z: posZ + step[direction, 0]));
         int next = GetBlockData(x: posX + step[direction, 1], z: posZ+ step[direction, 0]);
         int nextnext = GetBlockData(x: posX + step[direction, 1] * 2, z: posZ + step[direction, 0] * 2);
 
@@ -441,13 +412,13 @@ public class Map : MonoBehaviour, IMap
 
             switch (floor)
             {
-                case 0://솜사탕 위였으면 1단계 블럭 또는 열려있는 파르페  솜사탕 위가 아니면 솜사탕에서 멈춤 충돌 모션은
+                case 1://솜사탕 위였으면 1단계 블럭 또는 열려있는 파르페  솜사탕 위가 아니면 솜사탕에서 멈춤 충돌 모션은
                     //actionnum = 3; //
                     
                     if (next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
                     {
                         player.actionnum = 3;//crash : 3
-                        blocks[posZ, posX].Data = BlockNumber.normal;
+                        blocks[posZ, posX].data = BlockNumber.normal;
 						GameController.ParfaitOrder++;
                     }
                     else
@@ -456,7 +427,7 @@ public class Map : MonoBehaviour, IMap
                     }
                     break;
 
-                case 1://drop 1-> 0 or ride character
+                case 2://drop 1-> 0 or ride character
                     if(next == BlockNumber.character)
                     {
                         //ride motion
@@ -474,13 +445,13 @@ public class Map : MonoBehaviour, IMap
                     {
                         pos.y -= 1;
                         player.actionnum = 5;//drop : 5
-                        blocks[posZ, posX].Data = BlockNumber.normal;
+                        blocks[posZ, posX].data = BlockNumber.normal;
 						GameController.ParfaitOrder++;
                     }
                     else if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)//onCloud(2층)에서 2층 파레페 먹고 멈
                     {
                         player.actionnum = 3;// crash : 3
-                        blocks[posZ, posX].Data = BlockNumber.upperNormal;
+                        blocks[posZ, posX].data = BlockNumber.upperNormal;
 						GameController.ParfaitOrder++;
                     }
                     else
@@ -490,7 +461,7 @@ public class Map : MonoBehaviour, IMap
 
                     break;
 
-                case 2://drop 2-> 1 or 0
+                case 3://drop 2-> 1 or 0
                     if (next >= BlockNumber.normal && next <= BlockNumber.cracker_2)
                     {
                         player.actionnum = 5;//drop : 5
@@ -500,7 +471,7 @@ public class Map : MonoBehaviour, IMap
                     {
                         player.actionnum = 5;//drop : 5
                         pos.y -= 2;
-                        blocks[posZ, posX].Data = BlockNumber.normal;
+                        blocks[posZ, posX].data = BlockNumber.normal;
 						GameController.ParfaitOrder++;
                     }
                     else if(next >= BlockNumber.upperNormal && next <= BlockNumber.upperCracker_2)
@@ -512,7 +483,7 @@ public class Map : MonoBehaviour, IMap
                     {
                         player.actionnum = 5;//drop : 5
                         pos.y -= 1;
-                        blocks[posZ, posX].Data = BlockNumber.upperNormal;
+                        blocks[posZ, posX].data = BlockNumber.upperNormal;
 						GameController.ParfaitOrder++;
                     }
                     else
@@ -542,16 +513,16 @@ public class Map : MonoBehaviour, IMap
         }
         else//cant block
         {
-            Debug.Log("cant block : " + pos);
+            Debug.Log("cant block : " + pos + " BlockNumber : " + next);
 
-            if((pos.y == 0 && next == BlockNumber.character) || (pos.y == 1 &&next == BlockNumber.upperCharacter))
+            if((pos.y == 1 && next == BlockNumber.character) || (pos.y == 2 &&next == BlockNumber.upperCharacter))
             {
                 player.actionnum = 4; // character끼리 충돌 : 4
 
                 if (player.onCloud)
                     player.isLock = true;
             }
-            else if(player.state == Player.State.Master && pos.y == 0 && next >= BlockNumber.upperNormal && next < BlockNumber.upperObstacle)
+            else if(player.state == Player.State.Master && pos.y == 1 && next >= BlockNumber.upperNormal && next < BlockNumber.upperObstacle)
             {
                 player.actionnum = 3;
                 player.stateChange = true;
@@ -565,18 +536,18 @@ public class Map : MonoBehaviour, IMap
         //pos = new Vector3(posX, pos.y, posZ);
         player.targetPositions.Add(new Tuple<Vector3, int>(pos, player.getDirection));
         //temp
-        player.temp = blocks[posZ, posX].Data;
+        player.temp = blocks[posZ, posX].data;
 		Debug.Log("player temp is : " + player.temp);
 		switch ((int)pos.y)
         {
-            case 0:
-                blocks[posZ, posX].Data = BlockNumber.character;
-                break;
             case 1:
-                blocks[posZ, posX].Data = BlockNumber.upperCharacter;
+                blocks[posZ, posX].data = BlockNumber.character;
                 break;
             case 2:
-                blocks[posZ, posX].Data = BlockNumber.upperCharacter;
+                blocks[posZ, posX].data = BlockNumber.upperCharacter;
+                break;
+            case 3:
+                blocks[posZ, posX].data = BlockNumber.upperCharacter;
                 break;
         }
         //remaincheck는 도착한 후
@@ -603,21 +574,21 @@ public class Map : MonoBehaviour, IMap
 
     public void UpdateCheckArray(int width, int height, bool isCheck)
     {
-        // Debug.Log(height + "," + width + "  is checked " + isCheck);
+        //Debug.Log(height + "," + width + "  is checked " + isCheck);
         check[height, width] = isCheck;
     }
 
     public int GetBlockData(int x, int z)
     {
         if (x < mapsizeW && x >=0 && z < mapsizeH && z >= 0)
-            return blocks[z, x].Data;
+            return blocks[z, x].data;
         else
             return BlockNumber.obstacle;
     }
 
     public void SetBlockData(int x, int z , int value)
     {
-        blocks[z, x].Data = value;
+        blocks[z, x].data = value;
     }
 
     public void SetBlocks(int x, int z , Block block)
@@ -633,21 +604,21 @@ public class Map : MonoBehaviour, IMap
 		{
 			for (int j = 0; j < mapsizeW; j++)
 			{
-				if (blocks[i, j].Data == BlockNumber.parfaitA || blocks[i, j].Data == BlockNumber.upperParfaitA)
+				if (blocks[i, j].data == BlockNumber.parfaitA || blocks[i, j].data == BlockNumber.upperParfaitA)
 				{
-					parfaitPos[0] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].Data);
+					parfaitPos[0] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
 				}
-				else if (blocks[i, j].Data == BlockNumber.parfaitB || blocks[i, j].Data == BlockNumber.upperParfaitB)
+				else if (blocks[i, j].data == BlockNumber.parfaitB || blocks[i, j].data == BlockNumber.upperParfaitB)
 				{
-					parfaitPos[1] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].Data);
+					parfaitPos[1] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
 				}
-				else if (blocks[i, j].Data == BlockNumber.parfaitC || blocks[i, j].Data == BlockNumber.upperParfaitC)
+				else if (blocks[i, j].data == BlockNumber.parfaitC || blocks[i, j].data == BlockNumber.upperParfaitC)
 				{
-					parfaitPos[2] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].Data);
+					parfaitPos[2] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
 				}
-				else if (blocks[i, j].Data == BlockNumber.parfaitD || blocks[i, j].Data == BlockNumber.upperParfaitD)
+				else if (blocks[i, j].data == BlockNumber.parfaitD || blocks[i, j].data == BlockNumber.upperParfaitD)
 				{
-					parfaitPos[3] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].Data);
+					parfaitPos[3] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
 				}
 			}
 		}
@@ -663,12 +634,12 @@ public class Map : MonoBehaviour, IMap
 		{
 			for (int j = 0; j < mapsizeW; j++)
 			{
-				if ((blocks[i, j].Data >= BlockNumber.cracker_0 && blocks[i, j].Data <= BlockNumber.cracker_2)
-                    || (blocks[i, j].Data >= BlockNumber.upperCracker_0 && blocks[i, j].Data <= BlockNumber.upperCracker_2))
+				if ((blocks[i, j].data >= BlockNumber.cracker_0 && blocks[i, j].data <= BlockNumber.cracker_2)
+                    || (blocks[i, j].data >= BlockNumber.upperCracker_0 && blocks[i, j].data <= BlockNumber.upperCracker_2))
 				{
 					Vector2 blockPos = new Vector2(i, j);
-					Vector2 blockData = new Vector2(blocks[i, j].GetComponent<CrackedBlock>().count, blocks[i, j].Data);
-					crackerBlocks.Insert(index, new KeyValuePair<Vector2, Vector2>(blockPos, blockData));
+					Vector2 blockdata = new Vector2(blocks[i, j].GetComponent<CrackedBlock>().count, blocks[i, j].data);
+					crackerBlocks.Insert(index, new KeyValuePair<Vector2, Vector2>(blockPos, blockdata));
 					index++;
 				}
 			}

@@ -47,7 +47,7 @@ public class JsonData
         {
             for (int j = 0; j < width; j++)
             {
-                value += IndexToChar(map.lines[i].line[j]);
+                value += IndexToChar(map.datas[i][j]);
             }
         }
 
@@ -78,15 +78,8 @@ public class JsonData
             }
         }
 
-        Map newMap = new Map(
-            size: new Vector2(height, width),
-            isParfait: parfait == 0 ? false : true,
-            posA: StringToPosition(posA),
-            posB: StringToPosition(posB),
-            datas: datas,
-            star_limit : new List<int>(){100,100,100}
-            );
 
+        Map newMap = new Map();
 
         return newMap;
     }

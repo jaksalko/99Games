@@ -18,11 +18,16 @@ public class ParfaitBlock : Block
     }
     public int sequence;
     public State state;
-
+    
 	public AudioClip meltSound;
-    public override void Init(int block_num)
+    public override void Init(int block_num,int style)
     {
-        base.Init(block_num);
+        base.Init(block_num,style);
+
+        int parfait_num = block_num % 10 - 1;
+        GameController.instance.mapLoader.parfaitBlock[parfait_num] = this;
+        object_styles[parfait_num].SetActive(true);
+
         state = State.inactive;
         switch(block_num)
         {
@@ -82,11 +87,15 @@ public class ParfaitBlock : Block
             ParfaitBlock nextParfaitBlock = GameController.instance.mapLoader.parfaitBlock[sequence + 1];
             nextParfaitBlock.Activate();           
         }
-		gameObject.transform.GetChild(0).gameObject.SetActive(false);
-		// Destroy(gameObject);
-	}
+        object_styles[sequence].SetActive(false);
+        for (int i = 0; i < activeParticle.Length; i++)
+        {
+            activeParticle[i].Stop();
+        }
+        // Destroy(gameObject);
+    }
 
-	public bool GetParfait(MapLoader map)
+    public bool GetParfait(MapLoader map)
     {
         state = State.clear;
 

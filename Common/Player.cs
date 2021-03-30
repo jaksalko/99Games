@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using System;
 using System.Linq;
 
-public class Player : MonoBehaviour , IMoveable
+public class Player : Block , IMoveable
 {
 	[SerializeField]
 	public enum State
@@ -16,9 +16,17 @@ public class Player : MonoBehaviour , IMoveable
     }
     Vector3[] dir = new Vector3[] { Vector3.forward, Vector3.right, Vector3.back, Vector3.left };
 
+
+    [Header("Components")]
     [SerializeField]
     CharacterController cc;
+    [SerializeField]
     CheckAnimationState stateMachine;
+    [SerializeField]
+    AudioSource playerAudio;
+    [SerializeField]
+    Animator animator;
+
 
     [Header("Character Infomation")]
     public float speed;   
@@ -28,7 +36,6 @@ public class Player : MonoBehaviour , IMoveable
     public int getDirection = -1;
     public int direction = -1;
 
-    Vector3 targetPos;
     public List<Tuple<Vector3, int>> targetPositions = new List<Tuple<Vector3, int>>();
     
 
@@ -52,15 +59,12 @@ public class Player : MonoBehaviour , IMoveable
 	public AudioClip departureSound;
 	public AudioClip fallSound;
 	public AudioClip slideSound;
-    [SerializeField]
-	AudioSource playerAudio;
+    
 	private bool isSlideSoundPlaying;
 
     [Header("Character Particle System")]
-    public ParticleSystem moveParticle;
-	public ParticleSystem crashParticle;
 	public GameObject bumpParticle;
-    public Animator animator;
+    
     
 	
     
@@ -79,10 +83,13 @@ public class Player : MonoBehaviour , IMoveable
         actionnum = 0;
         
 	}
-  
-    
-   
-   
+
+    public override void Init(int block_num, int style)
+    {
+        base.Init(block_num, style);
+    }
+
+
     void Start()
     {
         state = State.Idle;
@@ -90,11 +97,14 @@ public class Player : MonoBehaviour , IMoveable
 
         cc = GetComponent<CharacterController>();
         playerAudio = GetComponent<AudioSource>();
+        animator = GetComponent<Animator>();
         stateMachine = animator.GetBehaviour<CheckAnimationState>();
+        
         stateMachine.player = this;
         stateMachine.ActionEnd += AnimationEnd;
-  
 
+        
+            
 
     }
     public void Move(Map map, int direction)//call by GameController Command
@@ -145,11 +155,11 @@ public class Player : MonoBehaviour , IMoveable
 
         switch(startpos.y)
         {
-            case 0:
+            case 1:
                 temp = BlockNumber.normal;
                 break;
                 
-            case 1:
+            case 2:
                 temp = BlockNumber.upperNormal;
                 break;
         }
@@ -169,7 +179,7 @@ public class Player : MonoBehaviour , IMoveable
         }
         else                // 바닥이 없으면 떨어짐 (여기다 쿵! 넣으면되는데 지금 잘 작동이 안 되서 넣으면 안 됨)
         {
-            //Debug.Log("is not grounded!!!!");
+            Debug.Log("is not grounded!!!!");
             cc.Move(speed * Time.deltaTime * Vector3.down);
         }
 
@@ -230,8 +240,7 @@ public class Player : MonoBehaviour , IMoveable
                 animator.SetBool("move", false);
                 
  
-				//이동 시 발생하는 particle control
-				moveParticle.loop = false;
+				
 
                 GameController.instance.RemainCheck();
 
@@ -239,7 +248,7 @@ public class Player : MonoBehaviour , IMoveable
 
                 if (state == State.Master)
                 {
-                    other.temp = (transform.position.y == 0) ? BlockNumber.character : BlockNumber.upperCharacter;
+                    other.temp = (transform.position.y == 1) ? BlockNumber.character : BlockNumber.upperCharacter;
 
                     //change character?
 

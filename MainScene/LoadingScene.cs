@@ -52,7 +52,7 @@ public class LoadingScene : MonoBehaviour
     {
 
         //PlayerPrefs.SetInt("tutorial",1);
-        PlayerPrefs.SetInt("tutorial", IslandData.tutorial + 1);//튜토리얼 건너 뛰
+        PlayerPrefs.SetInt("tutorial", IslandData.tutorial + 1);//튜토리얼 건너 뛰기
 
         awsManager = AWSManager.instance;
         xmlManager = XMLManager.ins;

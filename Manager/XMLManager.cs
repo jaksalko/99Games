@@ -165,6 +165,11 @@ public class XMLManager : MonoBehaviour
                 {
                     itemDB.user.heart++;
                     itemDB.user.heart_time = 600;
+
+                    if(itemDB.user.heart == 5)
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -198,8 +203,8 @@ public class UserInfo
     public List<int> mySkinList; // 보유 스킨 번호 리스트 --> 보유 대표이미지 번호 리스트
     public List<int> myStyleList; // 보유 칭호 번호 리스트
 
-    public int crash_count = 0;
     public int drop_count = 0;
+    public int crash_count = 0;
     public int carry_count = 0;
     public int reset_count = 0;
     public int move_count = 0;
@@ -217,9 +222,9 @@ public class UserInfo
     public int skin_count = 0;
 
     public long playTime = 0;
+    public int clear_count = 0;
+    public int fail_count = 0;
 
-    public int clearCount = 0;
-    public int failCount = 0;
     public bool facebook;
     
 

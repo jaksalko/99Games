@@ -6,9 +6,9 @@ using UnityEngine.SceneManagement;
 
 public class MainSceneUIScript : UIScript
 {
-	
-    public GameObject EditorPlayPopup;
-    public GameObject EditorSettingPopup;
+
+	public GameObject EditorPlayPopup;
+
 
 	public GameObject[] islandList;
 	public RectTransform backgroundImage;
@@ -27,34 +27,44 @@ public class MainSceneUIScript : UIScript
 	public Text heart_text;
 	public Text heartTime_text;
 
+	public RectTransform editorDesign;
+	public RectTransform islandDesign;
+
+	bool isAction = false;
+	bool isEditor = false;
+	bool editorMake = false;
+
+	public ProfilePopup profilePopup;
+
+
 	private void Start()
 	{
 		xmlManager = XMLManager.ins;
 		soundManager = SoundManager.instance;
 		soundManager.ChangeBGM(0);
-        
+
 		int highLevel = xmlManager.itemDB.user.current_stage;
 
-		
-			int island_num = Island_Name(highLevel);
-			islandList[island_num].SetActive(true);
-			backgroundImage.localPosition += Vector3.right*(-1080)*island_num;
-		
-		
-			
-		
-		if(PlayerPrefs.GetInt("tutorial",0) == 0)//처음
+
+		int island_num = Island_Name(highLevel);
+		islandList[island_num].SetActive(true);
+		backgroundImage.localPosition += Vector3.right * (-1080) * island_num;
+
+
+
+
+		if (PlayerPrefs.GetInt("tutorial", 0) == 0)//처음
 		{
 			tutorialManager.SetActive(true);
 		}
-		else if(PlayerPrefs.GetInt("tutorial",0) == 1)//튜토리얼 스테이지 끝
+		else if (PlayerPrefs.GetInt("tutorial", 0) == 1)//튜토리얼 스테이지 끝
 		{
 			tutorialManager.SetActive(true);
 		}
 	}
 
-    private void Update()
-    {
+	private void Update()
+	{
 		boong_text.text = xmlManager.itemDB.user.boong.ToString();
 		heart_text.text = xmlManager.itemDB.user.heart + "/5";
 		heartTime_text.text = IntToTimerString();
@@ -91,12 +101,101 @@ public class MainSceneUIScript : UIScript
 
 	public void PressPlayBtn()
 	{
-		
+
 		GameManager.instance.nowLevel = GameManager.instance.userInfo.current_stage;
 		StartCoroutine(GameStart());
 
-		
+
 	}
+
+	public void EditorPlayIslandButtonClicked()
+    {
+		StartCoroutine(EditorModeChange());
+	}
+	public void EditorMakeIslandButtonClicked()
+    {
+		SceneManager.LoadScene("MapEditor");
+		//StartCoroutine(EditorModeChange());
+	}
+	IEnumerator EditorModeChange()
+    {
+		
+		Vector3 targetPosition;
+
+		if(editorMake)
+        {
+			targetPosition = editorDesign.localPosition + (Vector3.right * 1080);
+		}
+		else
+        {
+			targetPosition = editorDesign.localPosition - (Vector3.right * 1080);
+		}
+
+		while(editorDesign.localPosition != targetPosition)
+        {
+
+			editorDesign.localPosition = Vector3.Lerp(editorDesign.localPosition,targetPosition,Time.deltaTime * 10);
+
+			if (Mathf.Abs(editorDesign.localPosition.x - targetPosition.x) <= 1)
+				editorDesign.localPosition = targetPosition;
+			yield return null;
+		}
+		Debug.Log("arrive");
+		editorMake = editorMake ? false : true;
+		yield break;
+	}
+	public void ChangeGameContentButtonClicked()//Island <-> Editor 
+	{
+		if(!isAction)
+			StartCoroutine(ChangeGameContentAction());
+
+	}
+	IEnumerator ChangeGameContentAction()
+    {
+		isAction = true;
+
+		float time = 0;
+		Vector3 editor_targetPosition;
+		Vector3 island_targetPosition;
+
+		if(isEditor)
+		{
+			editor_targetPosition = new Vector3(0, 1920, 0);
+			island_targetPosition = new Vector3(0, 0, 0);
+		}
+		else
+        {
+			editor_targetPosition = new Vector3(0, 0, 0);
+			island_targetPosition = new Vector3(0, -1920, 0);
+		}
+		
+		while(editor_targetPosition != editorDesign.localPosition)
+        {
+			Debug.Log(editor_targetPosition);
+			time += Time.deltaTime;
+			editorDesign.localPosition = Vector3.Lerp(editorDesign.localPosition , editor_targetPosition, Time.deltaTime * 10);
+			islandDesign.localPosition = Vector3.Lerp(islandDesign.localPosition, island_targetPosition, Time.deltaTime * 10);
+
+			if (Mathf.Abs(editorDesign.localPosition.y - editor_targetPosition.y) <= 1)
+				editorDesign.localPosition = editor_targetPosition;
+			yield return null;
+        }
+
+		if (isEditor)
+		{
+			isEditor = false;
+		}
+		else
+		{
+			isEditor = true;
+
+		}
+
+		isAction = false;
+		yield break;
+
+    }
+
 
 	public void PressEglooBtn()
 	{
@@ -108,33 +207,7 @@ public class MainSceneUIScript : UIScript
 		SceneManager.LoadScene("StoreScene");
 	}
 
-    public void EditorPlayBtn()
-    {
-		//추후에 난이도 설정
-		//EditorPlayPopup.SetActive(true);
-		StartCoroutine(GameManager.instance.LoadCustomMapList(success =>
-		{
-			if (success)
-			{
-				EditorPlayPopup.SetActive(true);
-				
-			}
-			else
-			{
-				Debug.Log("cant load custom map list...");
-			}
-		}));
-
-		
-		//SceneManager.LoadScene("CustomMapPlayScene");
-	}
-
-    public void EditorBtn()
-    {
-        //맵크기설정
-        EditorSettingPopup.SetActive(true);
-        //SceneManager.LoadScene("MapEditor");
-    }
+   
 
 	IEnumerator GameStart()
     {
@@ -160,5 +233,9 @@ public class MainSceneUIScript : UIScript
 	public void SettingButtonClicked()
     {
 		settingPopup.SetActive(true);
+    }
+	public void ProfileButtonClicked()
+    {
+		profilePopup.gameObject.SetActive(true);
     }
 }

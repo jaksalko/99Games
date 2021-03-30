@@ -9,50 +9,115 @@ using System.Text.RegularExpressions;
 
 public class EditorSceneResultPopup : MonoBehaviour
 {
+    public Text warningText;
     public Text moveCount;
-    public GameObject[] difficulty;//0-4 : maximum 5 difficulty
-    public InputField stageTitle;
+    public Image levelImage;
 
-    Map newMap;
+    public InputField titleInputField;
+
+    Coroutine warningCoroutine;
+   
     int move;
     int dif;
+
+    int try_count = 0;
 
     public void ShowResultPopup(int count , int level)
     {
         move = count;
         dif = level;
 
-        moveCount.text = count.ToString();
-       
-        /*for(int i = 1 ; i <= level; i++)
-        {
-            difficulty[i-1].SetActive(true);
-        }*/
+        moveCount.text = "x" + count;
+        levelImage.sprite = Resources.Load<Sprite>("Icon/Level/" + dif);
 
-        newMap = GameController.instance.mapLoader.editorMap;
-
+        
         gameObject.SetActive(true);
     }
 
-    public void GoLobbyButtonClicked()
+    public void ModifyButtonClicked()
     {
         SceneManager.LoadScene("MainScene");
     }
 
-    public void MakeCustomStageClicked()
+    public void MakeCustomStageClicked(int try_count)
     {
-        string title_regex = "^[a-zA-Z가-힣0-9]{1}[a-zA-Z가-힣0-9]{1,7}$";
+        Debug.Log("connect try : " + try_count);
+
+        if(try_count >= 5)
+        {
+            AWSManager.instance.ConnectWithAWS(true);
+            return;
+        }
+
+        string title_regex = "^[a-zA-Z가-힣0-9]{1}[a-zA-Z가-힣0-9\\s]{0,6}[a-zA-Z가-힣0-9]{1}$";
         Regex regex = new Regex(title_regex);
 
+        if(regex.IsMatch(titleInputField.text))
+        {
+            AWSManager.instance.ConnectWithAWS(false);
+
+            Debug.Log("match");
+            
+            Map newMap = GameController.instance.GetMap();
+            newMap.map_title = titleInputField.text.ToString();
+            AWSManager.instance.CreateEditorMap(newMap, move, dif, CreateEditorMapCallback );
 
 
+            //성공 시 로비로 이동
+
+            //실패 시 --> 연결 문제 --> 재시도
+            //재시도 횟수 ?번이상일 시 통신 문제 출력
+
+
+        }
+        else
+        {
+            Debug.Log("no match");
+            titleInputField.text = "";
+            
+            StopAllCoroutines();
+            StartCoroutine(WarningText());
+            
+
+        }
+
+        
+        
 
         //Web Request
-        StartCoroutine(InsertCustomStage());
+
     }
 
-    IEnumerator InsertCustomStage()
+    void CreateEditorMapCallback(bool success)
     {
+        AWSManager.instance.ConnectWithAWS(success);
+        if (success)
+        {
+            SceneManager.LoadScene("MainScene");
+        }
+        else
+        {
+            
+            MakeCustomStageClicked(++try_count);
+        }
+    }
+
+    IEnumerator WarningText()
+    {
+        warningText.gameObject.SetActive(true);
+        float time = 0;
+
+        Color warningTextColor = warningText.color;
+
+        while(time <= 3)
+        {
+            time += Time.deltaTime;
+            warningTextColor.a = time * 2;
+            warningText.color = warningTextColor;
+            yield return null;
+        }
+        warningText.gameObject.SetActive(false);
+        yield break;
         /*JsonAdapter jsonAdapter = new JsonAdapter();
         
         JsonData customStage =

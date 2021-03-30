@@ -7,14 +7,16 @@ public class XMLDyanmoDBParser
         var aws = AWSManager.instance.user;
         var xml = XMLManager.ins.itemDB.user;
 
+        aws.nickname = xml.nickname;
         aws.boong = xml.boong;
-        aws.current_stage = xml.current_stage;
         aws.heart = xml.heart;
         aws.heart_time = xml.heart_time;
+        aws.current_stage = xml.current_stage;
         aws.log_out = xml.log_out;
-        aws.move_list = xml.move_list;
+        aws.star_list = Parser.ListToString(xml.star_list);
+        aws.move_list = Parser.ListToString(xml.move_list);
         aws.reward_list = xml.reward_list;
-        aws.star_list = xml.star_list;
+        
 
         
         aws.ping_skin_num = xml.ping_skin_num;
@@ -28,12 +30,14 @@ public class XMLDyanmoDBParser
         aws.myStyleList = xml.myStyleList;
 
         aws.drop_count = xml.drop_count;
+        aws.crash_count = xml.crash_count;
         aws.carry_count = xml.carry_count;
         aws.reset_count = xml.reset_count;
         aws.move_count = xml.move_count;
         aws.snow_count = xml.snow_count;
         aws.parfait_done_count = xml.parfait_done_count;
         aws.crack_count = xml.crack_count;
+        aws.cloud_count = xml.cloud_count;
 
         aws.editor_clear_count = xml.editor_clear_count;
         aws.editor_make_count = xml.editor_make_count;
@@ -44,6 +48,8 @@ public class XMLDyanmoDBParser
         aws.skin_count = xml.skin_count;
 
         aws.playTime = xml.playTime;
+        aws.clear_count = xml.clear_count;
+        aws.fail_count = xml.fail_count;
 
         XMLManager.ins.SaveItems();
         AWSManager.instance.Update_UserInfo();
@@ -53,14 +59,15 @@ public class XMLDyanmoDBParser
         var aws = AWSManager.instance.user;
         var xml = XMLManager.ins.itemDB.user;
 
+        xml.nickname = aws.nickname;
         xml.boong = aws.boong;
-        xml.current_stage = aws.current_stage;
         xml.heart = aws.heart;
         xml.heart_time = aws.heart_time;
+        xml.current_stage = aws.current_stage;
         xml.log_out = aws.log_out;
-        xml.move_list = aws.move_list;
+        xml.move_list = Parser.StringToList(aws.move_list);
         xml.reward_list = aws.reward_list;
-        xml.star_list = aws.star_list;
+        xml.star_list = Parser.StringToList(aws.star_list);
 
         xml.ping_skin_num = aws.ping_skin_num;
         xml.peng_skin_num = aws.peng_skin_num;
@@ -73,12 +80,14 @@ public class XMLDyanmoDBParser
         xml.myStyleList = aws.myStyleList;
 
         xml.drop_count = aws.drop_count;
+        xml.crash_count = aws.crash_count;
         xml.carry_count = aws.carry_count;
         xml.reset_count = aws.reset_count;
         xml.move_count = aws.move_count;
         xml.snow_count = aws.snow_count;
         xml.parfait_done_count = aws.parfait_done_count;
         xml.crack_count = aws.crack_count;
+        xml.cloud_count = aws.cloud_count;
 
         xml.editor_clear_count = aws.editor_clear_count;
         xml.editor_make_count = aws.editor_make_count;
@@ -89,6 +98,9 @@ public class XMLDyanmoDBParser
         xml.skin_count = aws.skin_count;
 
         xml.playTime = aws.playTime;
+        xml.clear_count = aws.clear_count;
+        xml.fail_count = aws.fail_count;
+
 
         XMLManager.ins.SaveItems();
         AWSManager.instance.Update_UserInfo();
