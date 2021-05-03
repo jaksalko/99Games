@@ -10,6 +10,7 @@ public class StageSceneResultPopup : UIScript
     public TextMeshProUGUI moveCount;
     public TextMeshProUGUI snowCount;
     public TextMeshProUGUI stageText;
+
     public Image[] starImage;
 
     public GameObject successPopup;
@@ -24,7 +25,7 @@ public class StageSceneResultPopup : UIScript
 
         if(isSuccess)
         {
-            if(gameManager.nowLevel <= IslandData.tutorial)
+            if(gameManager.nowLevel < IslandData.tutorial)
             {
                 homeBtn.gameObject.SetActive(false);
             }
@@ -36,6 +37,7 @@ public class StageSceneResultPopup : UIScript
                 Debug.Log(gameManager);
                 Debug.Log(IslandData.island_last.Length);
                 Debug.Log(IslandData.island_last[i]);
+
                 if(gameManager.nowLevel == IslandData.island_last[i])
                 {
                     nextButton.gameObject.SetActive(false);
@@ -62,15 +64,39 @@ public class StageSceneResultPopup : UIScript
     public void ReplayButtonClicked()
     {
         
-        if(gameManager.userInfo.heart > 0)
+        if(awsManager.userInfo.heart > 0)
         {
-            gameManager.userInfo.heart -= 1;
-            Load_Island(GameManager.instance.nowLevel);
+            awsManager.userInfo.heart -= 1;
+            awsManager.userHistory.heart_use++;
+
+            JsonAdapter.instance.UpdateData(awsManager.userInfo, "userInfo", ReplayCallback);
+            JsonAdapter.instance.UpdateData(awsManager.userHistory, "userInfo", ReplayCallback);
+            
         }
     }
     public void NextStageButtonClicked()
     {
         gameManager.nowLevel++;
         Load_Island(GameManager.instance.nowLevel);
+    }
+
+    void ReplayCallback(bool success)
+    {
+        if(success)
+        {
+            if(JsonAdapter.instance.EndLoading())
+            {
+                Load_Island(GameManager.instance.nowLevel);
+            }
+            else
+            {
+                Debug.Log("loading..");
+            }
+        }
+        else
+        {
+            Debug.LogError("Error");
+        
+        }
     }
 }

@@ -97,125 +97,8 @@ public class MapLoader : MonoBehaviour
         
     }
 
-    Block MakeBlock(Block.Type type ,int blockData , Vector3 pos_ , bool visible , bool isCheck)
-    {
-        Block newBlock = null;
-
-        switch(type)
-        {
-            case Block.Type.Outline:
-                GroundBlock outline = Instantiate(groundBlock , pos_ , groundBlock.transform.rotation);
-                outline.gameObject.SetActive(visible);                
-                outline.Init(blockData, 0 );
-                outline.transform.parent = obstacleParent;
-                newBlock = outline;
-
-                break;
-
-            case Block.Type.Ground:
-                GroundBlock ground = Instantiate(groundBlock, pos_, groundBlock.transform.rotation);
-                ground.gameObject.SetActive(visible);                
-                ground.Init(blockData , 0);
-               
-                ground.transform.parent = groundParent;
-
-                newBlock = ground;
-                break;
-
-            case Block.Type.SecondGround:
-                GroundBlock second = Instantiate(groundBlock_second, pos_, groundBlock.transform.rotation);
-                second.gameObject.SetActive(visible);
-                second.Init(blockData, 0);
-               
-                second.transform.parent = groundParent;
-
-                newBlock = second;
-                break;
-
-            case Block.Type.Obstacle:
-                ObstacleBlock obstacle = Instantiate(obstacleBlock,obstacleBlock.transform.position +  pos_, obstacleBlock.transform.rotation);
-                obstacle.gameObject.SetActive(visible);
-                obstacle.Init(blockData, 0);
-                obstacle.transform.parent = obstacleParent;
-
-                newBlock = obstacle;
-                break;
-
-            case Block.Type.Slope:
-                SlopeBlock slope = Instantiate(slopeBlock, pos_, Quaternion.Euler(new Vector3(0, 90 * (blockData - BlockNumber.slopeUp), 0)));
-                slope.gameObject.SetActive(visible);
-                slope.Init(blockData, 0);
-                slope.transform.parent = groundParent;
-
-                newBlock = slope;
-                break;
-
-            case Block.Type.Parfait:
-                parfaitBlock[0].gameObject.SetActive(true);
-                parfaitBlock[0].gameObject.transform.position = pos_;
-
-                parfaitBlock[0].sequence = 0;
-                parfaitBlock[0].Activate();
-
-                newBlock = parfaitBlock[0];
-                break;
-
-            case Block.Type.Cloud:
-                CloudBlock cloud = Instantiate(cloudBlock, pos_, Quaternion.Euler(new Vector3(0, 90*(blockData%10), 90)));
-                cloud.gameObject.SetActive(visible);
-                cloud.Init(blockData, 0);
-                cloud.transform.parent = groundParent;
-
-                newBlock = cloud;
-                break;
-
-            case Block.Type.Cracked:
-                CrackedBlock cracked = Instantiate(crackedBlock, pos_, Quaternion.identity);
-                cracked.gameObject.SetActive(visible);
-                cracked.Init(blockData, 0);
-                
-                cracked.transform.parent = groundParent;
-
-                newBlock = cracked;
-                break;
-
-            case Block.Type.broken:
-                CrackedBlock broken = Instantiate(crackedBlock, pos_, Quaternion.identity);
-                broken.gameObject.SetActive(visible);
-                broken.Init(blockData, 0);
-                broken.transform.parent = obstacleParent;
-
-                newBlock = broken;
-                break;
-
-        }
-        liveMap.UpdateCheckArray((int)pos_.x, (int)pos_.z, isCheck);
-
-        return newBlock;
-    }
+   
     
-    void SetOutlineBlock(int mapsizeH, int mapsizeW)
-    {
-        
-        for (int i = 0; i < mapsizeW; i++)
-        {
-            if (i == 0 || i == (mapsizeW - 1))//outline setting
-            {
-                for (int j = 0; j < mapsizeH; j++)
-                {
-                    liveMap.SetBlocks(i, j, MakeBlock(Block.Type.Outline,BlockNumber.obstacle, new Vector3(i, -0.5f, j), visible: false, isCheck: true));            
-                }
-            }
-            else
-            {
-                liveMap.SetBlocks(i, 0, MakeBlock(Block.Type.Outline, BlockNumber.obstacle, new Vector3(i, -0.5f, 0), visible: false, isCheck: true));
-                liveMap.SetBlocks(i, mapsizeH - 1, MakeBlock(Block.Type.Outline, BlockNumber.obstacle, new Vector3(i, -0.5f, mapsizeH -1), visible: false, isCheck: true));         
-            }
-        }
-
-
-    }
-
     void MakeGround(int mapsizeH, int mapsizeW)
     {
         blockFactory = BlockFactory.instance;
@@ -253,6 +136,10 @@ public class MapLoader : MonoBehaviour
                     liveMap.UpdateCheckArray(j, i, false);
                 }
                 else if (newBlock.data >= BlockNumber.upperParfaitA && newBlock.data <= BlockNumber.upperParfaitD)
+                {
+                    liveMap.UpdateCheckArray(j, i, false);
+                }
+                else if(newBlock.data == BlockNumber.character || newBlock.data == BlockNumber.upperCharacter)
                 {
                     liveMap.UpdateCheckArray(j, i, false);
                 }
@@ -364,51 +251,7 @@ public class MapLoader : MonoBehaviour
     
 
 
-    void MakeParfait(int mapsizeH, int mapsizeW)
-    {
-        int parfait_sequence = 0;
-
-        for (int i = 0; i < mapsizeH; i++)
-        {
-            for (int j = 0; j < mapsizeW; j++)
-            {
-                int blockData = liveMap.datas[i][j];
-                int sequence = (blockData % 10) - 1;
-                if (blockData >= BlockNumber.parfaitA && blockData <= BlockNumber.parfaitD)
-                {
-                    liveMap.SetBlocks(j,i, parfaitBlock[sequence]);
-                    parfaitBlock[sequence].gameObject.SetActive(true);
-                    parfaitBlock[sequence].gameObject.transform.position = new Vector3(j, 0.5f, i);
-                    
-                    parfaitBlock[sequence].Init(blockData, 0);
-                    
-                    parfait_sequence++;
-                 
-                }
-                else if(blockData >= BlockNumber.upperParfaitA && blockData <= BlockNumber.upperParfaitD)
-                {
-                    MakeBlock(Block.Type.SecondGround, blockData, new Vector3(j, 0.5f, i), visible: true, isCheck: false);
-
-                    liveMap.SetBlocks(j, i, parfaitBlock[sequence]);
-                    parfaitBlock[sequence].gameObject.SetActive(true);
-                    parfaitBlock[sequence].gameObject.transform.position = new Vector3(j, 1.5f, i);
-
-                    parfaitBlock[sequence].Init(blockData, 0);
-
-                    
-                    parfait_sequence++;
-                   
-                }
-                    
-                    
-                
-                
-
-
-
-            }
-        }
-    }
+    
 //스테이지 모드
     public Map GenerateMap(int index)//index == gameManager.nowLevel
     {
@@ -468,11 +311,11 @@ public class MapLoader : MonoBehaviour
     public Map CustomPlayMap()//다른 유저가 만든 
     {
         //editorMap.Initialize(GameManager.instance.playCustomData.itemdata);
-        liveMap = editorMap;
+        liveMap = GameManager.instance.customMap;
         liveMap.gameObject.SetActive(true);
 
-        MakeMap(editorMap.mapsizeH, editorMap.mapsizeW, editorMap.parfait);
-        return editorMap;
+        MakeMap(liveMap.mapsizeH, liveMap.mapsizeW, liveMap.parfait);
+        return liveMap;
     }
     public IEnumerator InfiniteMAP(int level , System.Action<Map> callback)
     {
@@ -496,9 +339,9 @@ public class MapLoader : MonoBehaviour
 
             
             string fixdata = JsonHelper.fixJson(www.downloadHandler.text);
-            JsonData[] datas = JsonHelper.FromJson<JsonData>(fixdata);
-           
-            JsonData selectedData = datas[Random.Range(0, datas.Length)];
+            EditorMap[] datas = JsonHelper.FromJson<EditorMap>(fixdata);
+
+            EditorMap selectedData = datas[Random.Range(0, datas.Length)];
 
             //editorMap.Initialize(selectedData);
             Debug.Log(editorMap.mapsizeH + "," + editorMap.mapsizeW + "," + editorMap.startPositionA);

@@ -25,8 +25,8 @@ public class GameController : MonoBehaviour
 
     Map map;
     public Map GetMap() { return map; }
-    int snow_total, snow_remain;
-    int moveCount;
+    public int snow_total, snow_remain;
+    public int moveCount; 
 
     [Header ("For Achievement Datas")]
     int dropCount; // 몇번 떨어졌는지
@@ -46,7 +46,7 @@ public class GameController : MonoBehaviour
 
     public bool customMode;
     public bool editorMode;
-    public int maxLevel;
+
 
 
 
@@ -62,10 +62,10 @@ public class GameController : MonoBehaviour
 
     SoundManager soundManager;
     GameManager gameManager = GameManager.instance;
-    
 
-    JsonAdapter jsonAdapter = new JsonAdapter();
-    UserData user;
+
+    JsonAdapter jsonAdapter = JsonAdapter.instance;
+    
 
     [SerializeField]
     Vector2 down;
@@ -83,9 +83,7 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
-        //PlayerPrefs.DeleteAll();
-
-
+        
         if (instance == null)
             instance = this;
         else
@@ -93,8 +91,7 @@ public class GameController : MonoBehaviour
 
 
         handler = new InputHandler();
-        SwipeStream();
-        GameSetting();
+        
 
     }
 
@@ -104,8 +101,11 @@ public class GameController : MonoBehaviour
         gameManager = GameManager.instance;
         soundManager = SoundManager.instance;
         awsManager = AWSManager.instance;
-
+        jsonAdapter = JsonAdapter.instance;
         soundManager.ChangeBGM(SceneManager.GetActiveScene().buildIndex);//섬 7-11
+
+        SwipeStream();
+        GameSetting();
     }
     
     void SwipeStream()
@@ -176,34 +176,34 @@ public class GameController : MonoBehaviour
             }
 
             ui.SetMoveCountText(moveCount,map.star_limit[2]);
+            ui.revertButton.interactable = true;
         }
 
     }
 
-    public void MakeUndoCommand()   // press undo btn -> make undo command
+    public void UndoCommand()
     {
-        if (!nowPlayer.Moving() && isPlaying)
+        if (moveCount < map.star_limit[0])
         {
-            Debug.Log("undo command made");
-            handler.UndoCommand();
-            moveCount--;
-            if(moveCount < map.star_limit[0])
-            {
-                star = 3;
-            }
-            else if(moveCount < map.star_limit[1])
-            {
-                star = 2;
-            }
-            else if(moveCount <= map.star_limit[2])
-            {
-                star = 1;
-            }
-            
-            ui.SetMoveCountText(moveCount,map.star_limit[2]);
+            star = 3;
         }
+        else if (moveCount < map.star_limit[1])
+        {
+            star = 2;
+        }
+        else if (moveCount < map.star_limit[2])
+        {
+            star = 1;
+        }
+        else
+        {
+            star = 0;
+        }
+        ui.revertButton.interactable = false;
+        ui.SetMoveCountText(moveCount, map.star_limit[2]);
     }
 
+   
 
 
     int NormalizeSwipe()
@@ -381,7 +381,7 @@ public class GameController : MonoBehaviour
         }
         ui.inGame.SetActive(true);
 
-        /*
+        
 
         //if tutorial mode active tutorial!
         if(PlayerPrefs.GetInt("tutorial",0) == 0)
@@ -389,24 +389,24 @@ public class GameController : MonoBehaviour
             tutorialManager.gameObject.SetActive(true);
         }
         
-        if(gameManager.userInfo.current_stage == IslandData.tutorial+1 && gameManager.nowLevel == IslandData.tutorial+1)//ice 1
+        if(awsManager.userInfo.stage_current == IslandData.tutorial+1 && gameManager.nowLevel == IslandData.tutorial+1)//ice 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
-        else if(gameManager.userInfo.current_stage == IslandData.iceCream+1 && gameManager.nowLevel == IslandData.iceCream+1)//beach 1
+        else if(awsManager.userInfo.stage_current == IslandData.iceCream+1 && gameManager.nowLevel == IslandData.iceCream+1)//beach 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
-        else if(gameManager.userInfo.current_stage == IslandData.beach+1 && gameManager.nowLevel == IslandData.beach+1)//cracker 1
+        else if(awsManager.userInfo.stage_current == IslandData.beach+1 && gameManager.nowLevel == IslandData.beach+1)//cracker 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
-        else if(gameManager.userInfo.current_stage == IslandData.cracker+1 && gameManager.nowLevel == IslandData.cracker+1)//cotton 1
+        else if(awsManager.userInfo.stage_current == IslandData.cracker+1 && gameManager.nowLevel == IslandData.cracker+1)//cotton 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
 
-        */
+        
             
     }
 
@@ -446,6 +446,8 @@ public class GameController : MonoBehaviour
 
     public void GameEnd(bool isSuccess)
     {
+        UserHistory userHistory = awsManager.userHistory;
+        UserInfo userInfo = awsManager.userInfo;
 
         isPlaying = false;
         endTime = Time.time;
@@ -455,39 +457,7 @@ public class GameController : MonoBehaviour
 
         if (customMode)
         {
-            /**
-
-            //클리어 에디터 모드 맵 데이터 추가하기 (클리어 한 맵 데이터를 처리하기 위해서)
-            CustomMapItem nowPlayData = GameManager.instance.playCustomData;
-
-            if (!nowPlayData.isPlayed)
-            {
-                CustomStagePlayerData newPlayerData = new CustomStagePlayerData(gameManager.user.id, nowPlayData.itemdata.title, false);
-                gameManager.customStagePlayerDatas.Add(newPlayerData);
-                var json = JsonUtility.ToJson(newPlayerData);
-
-                StartCoroutine(jsonAdapter.API_POST("editorPlay/add", json, callback => {
-
-
-
-                }));//add tuple
-            }
-
-            if (moveCount < nowPlayData.itemdata.moveCount)
-            {
-                nowPlayData.itemdata.moveCount = moveCount;
-                var json = JsonUtility.ToJson(nowPlayData.itemdata);
-
-                StartCoroutine(jsonAdapter.API_POST("map/clear", json, callback => { }));//change moveCount
-            }
-            //if !is
-            //Add Tuple Customclear DB
-            //
-
-
-            //clear custom map user update(cash+? map clear 여부)
-
-            **/
+            
 
         }
         else if (editorMode)//mapLoader.editorMap 생성하기
@@ -496,59 +466,63 @@ public class GameController : MonoBehaviour
         }
         else//stage mode
         {
-            int level = gameManager.userInfo.current_stage;
+            int level = awsManager.userInfo.stage_current;
             int nowLevel = gameManager.nowLevel;//input level (select stage or play btn)
 
             if(isSuccess)
             {
-                if(nowLevel == IslandData.tutorial)
+                userHistory.stage_clear++;
+                
+
+                if (nowLevel == IslandData.tutorial)
                 {
                     PlayerPrefs.SetInt("tutorial",1);
                     
                 }
-                
 
-                if(gameManager.userInfo.star_list[nowLevel] < star )
-                {
-                    gameManager.userInfo.star_list[nowLevel] = star;
-                }
-                if(gameManager.userInfo.move_list[nowLevel] > moveCount )
-                {
-                    gameManager.userInfo.move_list[nowLevel] = moveCount;
-                }
+                
 
                 if (nowLevel == level)//지금 스테이지 레벨 == 유저의 도전해야할 레벨
                 {
-                    if(level < IslandData.lastLevel)
-                    {
-                        gameManager.userInfo.current_stage++;
-                        gameManager.userInfo.star_list.Add(0);
-                        gameManager.userInfo.move_list.Add(99);
-                        
+                    Debug.Log("high level");
+                    UserStage newStageClear = new UserStage(userInfo.nickname, userInfo.stage_current, star, moveCount);
 
-                    }
+                    awsManager.userStage.Add(newStageClear);
+                    jsonAdapter.CreateUserStage(newStageClear, WebCallback);
 
-                    gameManager.userInfo.boong += 30;
-                   
+                    userInfo.stage_current++;
+                    userInfo.boong += 200 + IslandData.Island_Num(nowLevel) * 50;
 
-                    //StageClear(gameManager.nowLevel, moveCount);//stage clear data insert (stage , step)
-                    //UserUpdate(30, gameManager.nowLevel + 1);//cash +30 & clear stage +1
                 }
                 else
                 {
-                    //StageClear(moveCount);//stage clear data Update (step)
+                    if (awsManager.userStage[nowLevel].stage_star < star)
+                    {
+                        awsManager.userStage[nowLevel].stage_star = star;
+                    }
+                    if (awsManager.userStage[nowLevel].stage_move > moveCount)
+                    {
+                        awsManager.userStage[nowLevel].stage_move = moveCount;
+                    }
+
+                    
+                    jsonAdapter.UpdateData(awsManager.userStage[nowLevel], "userStage", WebCallback);
+                    
                 }
             }
             else
             {
+                userHistory.stage_fail++;
+
                 //실패 시
             }
-            
 
-            if (nowLevel == maxLevel)//???
-            {
-                ui.nextLevelBtn.interactable = false;
-            }
+            //xmlManager.SaveItems();
+            jsonAdapter.UpdateData(userInfo, "userInfo", WebCallback);
+            jsonAdapter.UpdateData(userHistory, "userHistory",WebCallback);
+
+
+            
         }
 
 
@@ -559,39 +533,31 @@ public class GameController : MonoBehaviour
 
 
         
-        UpdateData(isSuccess);
+        
 
     }
 
-    void UpdateData(bool success)
+    void WebCallback(bool success)
     {
-        gameManager.userInfo.move_count += moveCount;
-        gameManager.userInfo.snow_count += snow_total;
-
-        if(success)
+        if (success)
         {
-            gameManager.userInfo.clear_count++;
+            if (jsonAdapter.EndLoading())
+            {
+                //
+            }
+
         }
         else
         {
-            gameManager.userInfo.fail_count++;
+            Debug.LogError("fail load user");
         }
-
-        //update and save xml data
-        //sync xml with dynamodb data
-        //save dynamodb data
-
-        XMLDyanmoDBParser parser = new XMLDyanmoDBParser();
-        parser.XML_to_DynamoDB();
-        xmlManager.SaveItems();
-        awsManager.Update_UserInfo();
     }
 
-    
 
 
 
 
 
- 
+
+
 }

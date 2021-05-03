@@ -16,6 +16,8 @@ public class BlockFactory : MonoBehaviour
 
     public Player[] playerPrefabs;
 
+    int player_count = 0;
+
     private void Awake()
     {
         //PlayerPrefs.DeleteAll();
@@ -30,11 +32,7 @@ public class BlockFactory : MonoBehaviour
 
     }
 
-    public Player CreatePlayer(int skinNumber)
-    {
-        Player newPlayer = Instantiate(playerPrefabs[skinNumber]);
-        return newPlayer;
-    }
+    
 
     public Block EditorCreateBlock(int blockNumber, int style, Vector2 position)
     {
@@ -129,7 +127,7 @@ public class BlockFactory : MonoBehaviour
         
 
         
-        if(blockNumber > BlockNumber.upperCharacter)
+        if(blockNumber >= BlockNumber.upperCharacter)//3층하단 블럭
         {
             height = 2;
             Block underBlock = Instantiate(groundBlockPrefab, new Vector3(position.x, 0, position.y), groundBlockPrefab.transform.rotation);
@@ -137,7 +135,7 @@ public class BlockFactory : MonoBehaviour
             underBlock = Instantiate(secondGroundBlockPrefab, new Vector3(position.x, 1, position.y), groundBlockPrefab.transform.rotation);
             underBlock.Init(blockNumber, styles[1]);
         }
-        else if(blockNumber >= BlockNumber.upperNormal)
+        else if(blockNumber >= BlockNumber.upperNormal)//2층 하단 블럭
         {
             height = 1;
             Block underBlock = Instantiate(groundBlockPrefab, new Vector3(position.x, 0, position.y), groundBlockPrefab.transform.rotation);
@@ -201,13 +199,33 @@ public class BlockFactory : MonoBehaviour
         }
         else if(BlockNumber.character == blockNumber)
         {
-            
-            newBlock = Instantiate(playerPrefabs[Random.Range(0, 27)], new Vector3(position.x, 1, position.y), Quaternion.identity);
+            int player_skin;
+            if(player_count == 0)
+            {
+                player_count = 1;
+                player_skin = AWSManager.instance.userInfo.skin_a;
+            }
+            else
+            {
+                player_count = 0;
+                player_skin = AWSManager.instance.userInfo.skin_b;
+            }
+            newBlock = Instantiate(playerPrefabs[player_skin], new Vector3(position.x, 1, position.y), Quaternion.identity);
         }
         else if(BlockNumber.upperCharacter == blockNumber)
         {
-            
-            newBlock = Instantiate(playerPrefabs[Random.Range(0, 27)], new Vector3(position.x, 2, position.y), Quaternion.identity);
+            int player_skin;
+            if (player_count == 0)
+            {
+                player_count = 1;
+                player_skin = AWSManager.instance.userInfo.skin_a;
+            }
+            else
+            {
+                player_count = 0;
+                player_skin = AWSManager.instance.userInfo.skin_b;
+            }
+            newBlock = Instantiate(playerPrefabs[player_skin], new Vector3(position.x, 2, position.y), Quaternion.identity);
         }
         else
         {

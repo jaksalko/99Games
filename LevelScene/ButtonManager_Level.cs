@@ -20,43 +20,50 @@ public class ButtonManager_Level : UIScript
 	public RectTransform content; //2160~-2160
 	public Transform[] stageScrollView;
 	public LevelButton buttonPrefab;
-	XMLManager xmlManager = XMLManager.ins;
-
+	
 	public StagePopup stagePopup;
 	// Start is called before the first frame update
 	void Start()
     {
 
-		xmlManager = XMLManager.ins;
-		highLevel = gameManager.userInfo.current_stage;
+		
+		highLevel = awsManager.userInfo.stage_current;
 
 		content.localPosition = new Vector3(2160 - 1080*IslandData.Island_Num(highLevel),0,0);
 
 		Debug.Log("high level : " + highLevel);
 
-		for(int i = 0 ; i <= highLevel ; i++)
+		for(int i = 0 ; i < highLevel ; i++)
 		{
 			LevelButton newButton = Instantiate(buttonPrefab,default);
 
-			newButton.SetStarImage(xmlManager.itemDB.user.star_list[i]);
-			newButton.moveCount.text = "걸음 수 " + xmlManager.itemDB.user.move_list[i];
+			newButton.SetStarImage(awsManager.userStage[i].stage_star);
+			newButton.moveCount.text = "걸음 수 " + awsManager.userStage[i].stage_move;
 			newButton.stage = i;
 			newButton.StageText();
 
 			
 
-			newButton.transform.SetParent(stageScrollView[newButton.island]);
+			newButton.transform.SetParent(stageScrollView[newButton.island],false);
 		}
 
-		for (int l = highLevel + 1 ; l <= IslandData.lastLevel ; l++)
+		for (int l = highLevel ; l <= IslandData.lastLevel ; l++)
         {
 			LevelButton newButton = Instantiate(buttonPrefab,default);
 			newButton.SetStarImage(0);
 			newButton.moveCount.text = "걸음 수 99";
 			newButton.stage = l;
 			newButton.StageText();
-			newButton.transform.SetParent(stageScrollView[newButton.island]);
-			newButton.gameObject.GetComponent<Button>().interactable = false;
+			newButton.transform.SetParent(stageScrollView[newButton.island], false);
+			
+			if(l == highLevel)
+            {
+				newButton.gameObject.GetComponent<Button>().interactable = true;
+			}
+			else
+            {
+				newButton.gameObject.GetComponent<Button>().interactable = false;
+			}
         }
 
 		if(PlayerPrefs.GetInt("tutorial",0) == 1)

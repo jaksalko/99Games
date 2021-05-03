@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class CrackedBlock : Block
-{   
+{
+    public bool crack_ready = false;
 	public int count;
 	public int x;
     public int z;
@@ -69,50 +70,34 @@ public class CrackedBlock : Block
 
     
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)//들어오고
     {
         cracker_particle.Play();
+        crack_ready = true;
     }
-    private void OnTriggerStay(Collider other)
-    {
-        if (other.gameObject.CompareTag("Leg"))
-            Debug.Log("stay");
-    }
-    private void OnTriggerExit(Collider other)
+    
+    private void OnTriggerExit(Collider other)//나갈 때 깨짐
     {
         if (other.gameObject.CompareTag("Leg"))
         {
-            audioSource.clip = crackerSound[count];
-            audioSource.Play();
-            count++;
-            data++;
-			// Cracked = count;
-			Debug.Log("through the cracked block :" + count);
-            if(count == 1)
+            if(crack_ready)
             {
-                
-                for(int i = 0; i < crackerMesh.Length; i++)
-                {
-                    crackerMesh[i].mesh = cracker2;
-                }
-                
-            }
-            else if(count == 2)
-            {
-                
-                crackerMesh[5].mesh = cracker3;
-            }
-            else if(count == 3)
-            {
-                
-                for(int i = 0; i < crackerRenderer.Length; i++)
-                {
-                    crackerRenderer[i].material = transparentMaterial;
-                }
+                crack_ready = false;
+                audioSource.clip = crackerSound[count];
+                audioSource.Play();
+                count++;//material setting
+                data++;//block data setting
 
-                crackerDebris.gameObject.SetActive(true);
+
+                Debug.Log("through the cracked block :" + count);
+
+                SetMaterial(count);
             }
-            
+            else
+            {
+                
+            }
+
         }
     }
 
@@ -120,12 +105,13 @@ public class CrackedBlock : Block
 
 	public void SetMaterial(int count)
 	{
-		for (int i = 0; i < crackerRenderer.Length; i++)
-		{
-			crackerRenderer[i].material = crackerMaterial;
-		}
+        for (int i = 0; i < crackerRenderer.Length; i++)
+        {
+            crackerRenderer[i].material = crackerMaterial;
+        }
 
-		if (count == 0)
+
+        if (count == 0)
 		{
 			for (int i = 0; i < crackerMesh.Length; i++)
 			{
@@ -143,9 +129,44 @@ public class CrackedBlock : Block
 		}
 		else if (count == 2)
 		{
-			crackerMesh[5].mesh = cracker3;
-		}
-		
-	}
 
+            for (int i = 0; i < crackerMesh.Length; i++)
+            {
+
+                crackerMesh[i].mesh = cracker2;
+            }
+
+            crackerMesh[5].mesh = cracker3;
+		}
+        else if (count == 3)
+        {
+            for (int i = 0; i < crackerRenderer.Length; i++)
+            {
+                crackerRenderer[i].material = transparentMaterial;
+            }
+        }
+
+        if (count == 3)
+        {
+            crackerDebris.gameObject.SetActive(true);
+        }
+        else
+            crackerDebris.gameObject.SetActive(false);
+
+    }
+
+    public override void RevertBlock()
+    {
+        if(count > 0)
+        {
+            count--;
+            data--;
+
+            SetMaterial(count);
+        }
+        else
+        {
+            Debug.LogWarning("Cracker Block Revert Error");
+        }
+    }
 }

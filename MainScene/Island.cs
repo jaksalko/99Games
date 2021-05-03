@@ -11,7 +11,8 @@ public class Island : MonoBehaviour
 
     XMLManager xmlManager = XMLManager.ins;
     CSVManager csvManager = CSVManager.instance;
-    int stage;
+    AWSManager awsManager = AWSManager.instance;
+    int user_stage;
     public int island;
 
     public GameObject medal;
@@ -24,7 +25,7 @@ public class Island : MonoBehaviour
 
         xmlManager = XMLManager.ins;
         csvManager = CSVManager.instance;
-        stage = xmlManager.itemDB.user.current_stage;
+        user_stage = awsManager.userInfo.stage_current;
 
         if(nowStage != null)//stage text 메인 씬에만 존재
         {
@@ -43,15 +44,7 @@ public class Island : MonoBehaviour
         //slider 숫자 표기하기 게이지 나타내기
     }
 
-    void SetIslandState()
-    {
-
-    }
-
-    public void GetReward()
-    {
-
-    }
+    
 
     void SetStageText() // only mainscene button
     {
@@ -59,17 +52,17 @@ public class Island : MonoBehaviour
         for(int i = 0 ; i < IslandData.island_last.Length ; i++)
         {
             
-            if(stage <= IslandData.island_last[i])//stage == current stage
+            if(user_stage <= IslandData.island_last[i])//stage == current stage
             {
                 island = i;
                 stageString += (i+1).ToString() + " - ";
                 if(i == 0)
                 {
-                    stageString += (stage+1).ToString();
+                    stageString += (user_stage + 1).ToString();
                 }
                 else
                 {
-                    stageString += (stage - IslandData.island_last[i-1]).ToString();
+                    stageString += (user_stage - IslandData.island_last[i-1]).ToString();
                 }
                 break;
             }
@@ -83,21 +76,24 @@ public class Island : MonoBehaviour
 
     void SetSlider()
     {
-        int stage_num = csvManager.islands[island].maps.Count;
+        int stage_num = csvManager.islands[island].maps.Count;//섬의 맵 개수
 
-        int maxValue = stage_num * 3;
-        int userValue = 0;
+        int maxValue = stage_num * 3;//별의 최대 개수 = 맵 개수 *3
+        int userValue = 0; //해당 스테이지에서 유저가 가지고 있는 
 
-        int island_start_num = 0;
+        int island_start_num = 0; //스테이지의 시작번호
 
         if (island != 0)
             island_start_num = IslandData.island_last[island - 1] + 1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
+        else
+            island_start_num = 0;
 
-        for (int i = island_start_num; i <= stage; i++)
+        for (int i = island_start_num; i < user_stage; i++)//섬의 시작 번호부터 유저 스테이지의 전까지 맵에서 유저가 얻은 별의 갯수를 합침
         {
-            userValue += xmlManager.itemDB.user.star_list[i];
+            userValue += awsManager.userStage[i].stage_star;
         }
 
+        //섬 번호 //해당 섬에서의 별 최대 값 //유저의 보유 별의 개수 // 해당 섬에서 얻을 수 있는 보상(3개)
         rewardSlider.SetSlider(island,maxValue, userValue, csvManager.GetRewardList(island));
     }
 
@@ -114,14 +110,14 @@ public class Island : MonoBehaviour
         int maxValue = stage_num * 3;
         int userValue = 0;
 
-        if(stage <= IslandData.island_last[island])//아직 그 섬을 깨지 못함
+        if(user_stage < IslandData.island_last[island])//아직 그 섬을 깨지 못함
         {
             medal.SetActive(false);
             island_image.sprite = Resources.Load<Sprite>("LevelScene/island_" + island + "_none");
 
-            for (int i = island_start_num ; i <= stage ; i++)
+            for (int i = island_start_num ; i < user_stage; i++)
             {
-                userValue += xmlManager.itemDB.user.star_list[i];
+                userValue += awsManager.userStage[i].stage_star;
             }
         }
         else//이미 클리어한 섬
@@ -132,7 +128,7 @@ public class Island : MonoBehaviour
 
             for (int i = island_start_num ; i <= IslandData.island_last[island] ; i++)
             {
-                userValue += xmlManager.itemDB.user.star_list[i];
+                userValue += awsManager.userStage[i].stage_star;
             }
         }
 

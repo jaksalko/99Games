@@ -33,8 +33,8 @@ public class Player : Block , IMoveable
     bool isPlayingParticle = false;
 
     public int actionnum;   
-    public int getDirection = -1;
-    public int direction = -1;
+    public int getDirection = -1;//초기 입력된 방향 map.getdestination 에서 Cloud를 만나면 변경됨.(Player 가 사용하지않)
+    public int direction = -1;//수정되는 방향값(targetposition에 의해)
 
     public List<Tuple<Vector3, int>> targetPositions = new List<Tuple<Vector3, int>>();
     
@@ -70,11 +70,7 @@ public class Player : Block , IMoveable
     
     [SerializeField]
     public Player other;
-    
-    [SerializeField]
-    bool simulating;
 
-    
 
     void AnimationEnd()
     {
@@ -113,36 +109,36 @@ public class Player : Block , IMoveable
         //if (animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))//remove this
         //{
             //isLock = false;
-            this.direction = getDirection = direction;
+        this.direction = getDirection = direction;
 
-            if (state == State.Slave)
+        if (state == State.Slave)
+        {
+            Debug.Log("slave move");
+            state = State.Idle;
+            other.state = State.Idle;
+            transform.SetParent(null);
+
+            /*if (other.upstair)
             {
-                Debug.Log("slave move");
-                state = State.Idle;
-                other.state = State.Idle;
-                transform.SetParent(null);
+                //thirdFloor = true;
+            }*/
 
-                /*if (other.upstair)
-                {
-                    //thirdFloor = true;
-                }*/
+            playerAudio.Stop();
 
-                playerAudio.Stop();
+        }
 
-            }
+        Debug.Log("move direction : " + direction);
+        transform.rotation = Quaternion.Euler(new Vector3(0f, direction * 90, 0f));
 
-            Debug.Log("move direction : " + direction);
-            transform.rotation = Quaternion.Euler(new Vector3(0f, direction * 90, 0f));
+        //CharacterMove(map.map);
 
-            //CharacterMove(map.map);
-            
-            map.SetBlockData((int)transform.position.x, (int)transform.position.z, temp);
-            
-            
-            map.GetDestination(this, transform.position);
-            Debug.Log(name + " : "+targetPositions.Count);
-            Debug.Log(name + " : " + "target position : " + targetPositions[targetPositions.Count - 1]);
-            isMoving = true;
+        map.SetBlockData((int)transform.position.x, (int)transform.position.z, temp);                
+        map.GetDestination(this, transform.position);
+
+        Debug.Log(name + " : "+targetPositions.Count);
+        Debug.Log(name + " : " + "target position : " + targetPositions[targetPositions.Count - 1]);
+        isMoving = true;
+
         //}
     }
 
@@ -180,7 +176,7 @@ public class Player : Block , IMoveable
         else                // 바닥이 없으면 떨어짐 (여기다 쿵! 넣으면되는데 지금 잘 작동이 안 되서 넣으면 안 됨)
         {
             Debug.Log("is not grounded!!!!");
-            cc.Move(speed * Time.deltaTime * Vector3.down);
+            cc.Move(speed*1.3f * Time.deltaTime * Vector3.down);
         }
 
         if (direction % 2 == 0)//vector.forward , vector.back ==> z 움직임 
@@ -405,12 +401,9 @@ public class Player : Block , IMoveable
         if (collider.gameObject.CompareTag("Parfait"))
         {
             ParfaitBlock parfait = collider.GetComponent<ParfaitBlock>();
-            if (parfait.state == ParfaitBlock.State.active)
+            if (parfait.sequence < GameController.ParfaitOrder)
             {
-                if (!simulating)
-                {
-                    // GameController.instance.ui.ParfaitDone();
-                }
+                
 				Debug.Log("get parfait...");
 				parfait.ActiveNextParfait();
             }

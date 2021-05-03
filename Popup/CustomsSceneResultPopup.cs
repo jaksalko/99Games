@@ -4,21 +4,43 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class CustomsSceneResultPopup : MonoBehaviour
+using TMPro;
+
+public class CustomsSceneResultPopup : UIScript
 {
-    JsonAdapter jsonAdapter = new JsonAdapter();
+    public TextMeshProUGUI moveCount;
+    public TextMeshProUGUI snowCount;
+    public TextMeshProUGUI stageText;
 
-    public Text moveCount;
-    public Text candyText;
-    public Button retryButton;
+    public Image[] starImage;
 
-    public void ShowResultPopup(int count)
+    public GameObject successPopup;
+    public GameObject failPopup;
+    public GameObject successEffect;
+
+
+
+    public void ShowResultPopup(bool isSuccess, int remain_snow, int move_count, int star_count)
     {
-        moveCount.text = count.ToString();
 
-        //user.candy == 0   --> AdButton active
-        //else              --> retryButton active
+        stageText.text = gameManager.customMap.map_title;
 
+        if (isSuccess)
+        {
+            
+            successEffect.SetActive(true);
+            successPopup.SetActive(true);
+            
+        }
+        else
+        {
+            failPopup.SetActive(true);
+            
+        }
+
+        moveCount.text = move_count.ToString();
+        snowCount.text = remain_snow.ToString();
+        starImage[star_count].gameObject.SetActive(true);
         gameObject.SetActive(true);
     }
 
@@ -32,14 +54,17 @@ public class CustomsSceneResultPopup : MonoBehaviour
         SceneManager.LoadScene("CustomMapPlayScene");//customMode Scene
     }
 
+
+
     public void PushButtonClicked()
     {
+        /*
         JsonData jsonData = GameManager.instance.playCustomData.itemdata;
 
         var json = JsonUtility.ToJson(jsonData);
         StartCoroutine(jsonAdapter.API_POST("map/push", json , callback => { }));
         StartCoroutine(jsonAdapter.API_POST("editorPlay/push", json , callback => { }));
-
+        */
         //map push++
         //candy++
         //show ad...

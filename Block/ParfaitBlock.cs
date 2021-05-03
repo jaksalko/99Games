@@ -5,7 +5,7 @@ using UnityEngine;
 public class ParfaitBlock : Block
 {
     public Animator iceBox;
-    public ParticleSystem[] activeParticle;
+    public ParticleSystem[] activeParticle;//parfait light
 
     
 
@@ -25,7 +25,8 @@ public class ParfaitBlock : Block
         base.Init(block_num,style);
 
         int parfait_num = block_num % 10 - 1;
-        GameController.instance.mapLoader.parfaitBlock[parfait_num] = this;
+        if(GameController.instance != null)
+            GameController.instance.mapLoader.parfaitBlock[parfait_num] = this;
         object_styles[parfait_num].SetActive(true);
 
         state = State.inactive;
@@ -56,82 +57,75 @@ public class ParfaitBlock : Block
     }
     
 
-    public void Activate()
-    {
-        Debug.Log("activate");
-        state = State.active;
-        iceBox.SetBool("melt", true);
-
-		if (!GetComponent<AudioSource>().isPlaying)
-		{
-			GetComponent<AudioSource>().clip = meltSound;
-			GetComponent<AudioSource>().Play();
-		}
-
-		for (int i = 0; i < activeParticle.Length; i++)
-        {
-            activeParticle[i].Play();
-        }
-        //iceBox.SetActive(false);
-        //renderer.material.color = Color.white;// reveal real color
-
-
-    }
+    
     public void ActiveNextParfait()
     {
-		Debug.Log("...active next parfait");
-		state = State.clear;
+		
+        ClearParfait();
 
         if(sequence < 3)
         {
             ParfaitBlock nextParfaitBlock = GameController.instance.mapLoader.parfaitBlock[sequence + 1];
             nextParfaitBlock.Activate();           
         }
+
+        
+        // Destroy(gameObject);
+    }
+
+    
+
+	public void ClearParfait()
+    {
+        state = State.clear;
         object_styles[sequence].SetActive(false);
+        iceBox.gameObject.SetActive(false);
         for (int i = 0; i < activeParticle.Length; i++)
         {
             activeParticle[i].Stop();
         }
-        // Destroy(gameObject);
+
+        GetComponent<BoxCollider>().enabled = false;
     }
 
-    public bool GetParfait(MapLoader map)
+    public void DeActivate()//얼려있는 상태로 돌아가기
     {
-        state = State.clear;
 
-		if (sequence < 3)
-        {
-            map.parfaitBlock[sequence + 1].Activate();
-			gameObject.transform.GetChild(0).gameObject.SetActive(false);
-			// Destroy(gameObject);
-            return false;//active next parfait
-        }
-        else
-        {
-			gameObject.transform.GetChild(0).gameObject.SetActive(false);
-            // Destroy(this.gameObject);
-            return true;//clear game
-        }
-            
-       
-        //Start Get Animation...
-        
+        state = State.inactive;
+        object_styles[sequence].SetActive(true);//오브젝트가 보여야 하므로 true
+        iceBox.gameObject.SetActive(true);
+        iceBox.SetBool("melt", false);
 
-        
+
+        for (int i = 0; i < activeParticle.Length; i++)
+        {
+            activeParticle[i].Stop();
+        }
+
+        GetComponent<BoxCollider>().enabled = true;
     }
 
-	public void Deactivate()
-	{
-		Debug.Log(gameObject.name + "deactivate");
+    public void Activate()//얼음이 녹은 상태로
+    {
+        state = State.active;
+        object_styles[sequence].SetActive(true);//오브젝트가 보여야 하므로 true
 
-		iceBox.gameObject.SetActive(true);
-		iceBox.SetBool("melt", false);
+        Debug.Log("activate");
+        iceBox.gameObject.SetActive(true);
+        iceBox.SetBool("melt", true);
+        //GetComponent<BoxCollider>().enabled = true;
+        if (!GetComponent<AudioSource>().isPlaying)
+        {
+            GetComponent<AudioSource>().clip = meltSound;
+            GetComponent<AudioSource>().Play();
+        }
 
-		state = State.inactive;
+        for (int i = 0; i < activeParticle.Length; i++)
+        {
+            activeParticle[i].Play();
+        }
 
-		for (int i = 0; i < activeParticle.Length; i++)
-		{
-			activeParticle[i].Stop();
-		}
-	}
+        GetComponent<BoxCollider>().enabled = true;
+
+    }
 }

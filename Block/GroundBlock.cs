@@ -6,7 +6,7 @@ public class GroundBlock : Block
 {
 
 	public GameObject snow;
-
+    public Snow[] snows;
 	
     public override void Init(int block_num, int style)
     {
@@ -15,7 +15,7 @@ public class GroundBlock : Block
         SetSnow();
     }
 
-    void SetSnow()
+    void SetSnow()//바닥에 깔리는 기본블럭은 눈이 설치되지 못하게 함. Visual
     {
         if(BlockNumber.normal == data && transform.position.y == 0)
         {
@@ -32,4 +32,12 @@ public class GroundBlock : Block
 
     }
 
+    public override void RevertBlock()
+    {
+        base.RevertBlock();
+        for(int i = 0; i < snows.Length; i++)
+        {
+            snows[i].gameObject.SetActive(true);
+        }
+    }
 }

@@ -45,7 +45,7 @@ public class EditorSceneResultPopup : MonoBehaviour
 
         if(try_count >= 5)
         {
-            AWSManager.instance.ConnectWithAWS(true);
+            //AWSManager.instance.ConnectWithAWS(true);
             return;
         }
 
@@ -54,13 +54,16 @@ public class EditorSceneResultPopup : MonoBehaviour
 
         if(regex.IsMatch(titleInputField.text))
         {
-            AWSManager.instance.ConnectWithAWS(false);
+            //AWSManager.instance.ConnectWithAWS(false);
 
             Debug.Log("match");
             
             Map newMap = GameController.instance.GetMap();
             newMap.map_title = titleInputField.text.ToString();
-            AWSManager.instance.CreateEditorMap(newMap, move, dif, CreateEditorMapCallback );
+
+            EditorMap editorMap = new EditorMap(map : newMap, nick : AWSManager.instance.userInfo.nickname , moveCount : move );
+            JsonAdapter.instance.CreateEditorMap(editorMap, CreateEditorMapCallback);
+            //AWSManager.instance.CreateEditorMap(newMap, move, dif, CreateEditorMapCallback );
 
 
             //성공 시 로비로 이동
@@ -90,15 +93,19 @@ public class EditorSceneResultPopup : MonoBehaviour
 
     void CreateEditorMapCallback(bool success)
     {
-        AWSManager.instance.ConnectWithAWS(success);
+        //AWSManager.instance.ConnectWithAWS(success);
         if (success)
         {
-            SceneManager.LoadScene("MainScene");
+            if(JsonAdapter.instance.EndLoading())
+            {
+                SceneManager.LoadScene("MainScene");
+            }
+            
         }
         else
         {
             
-            MakeCustomStageClicked(++try_count);
+           
         }
     }
 

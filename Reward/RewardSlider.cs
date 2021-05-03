@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
 public class RewardSlider : MonoBehaviour
 {
@@ -14,10 +15,10 @@ public class RewardSlider : MonoBehaviour
     public List<Reward> island_rewards;
 
     // Start is called before the first frame update
-    
 
-    
 
+
+    //섬 번호 //해당 섬에서의 별 최대 값 //유저의 보유 별의 개수 // 해당 섬에서 얻을 수 있는 보상(3개)
     public void SetSlider(int island_num, int maxValue , int userValue , List<Reward> rewards)//Initialize Slider
     {
         this.island_num = island_num;
@@ -27,40 +28,32 @@ public class RewardSlider : MonoBehaviour
 
         island_rewards = rewards;
 
-        int reward_frequency = maxValue / rewardImages.Length; // 전체 별 갯수 / 보상 횟수
-        Debug.Log("frequency : " + reward_frequency);
+        int reward_frequency = maxValue / rewardImages.Length; // 전체 별 갯수 / 보상 횟수 = 보상을 받을 수 있는 별의 간격
+        Debug.Log("frequency : " + reward_frequency);//보상을 받을 수 있는 별의 간격
 
-        for(int i = 0; i < rewardImages.Length; i++)
+        for (int i = 0; i < rewardImages.Length; i++)
         {
-            int reward_num = island_num * 3 + i;
-
+            int reward_num = island_num * 3 + i; //보상 번호
             int frequency = reward_frequency * (i + 1);
-            if (userValue < frequency)
-            {
-                //rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + frequency + "_none");
+
+
+            if (userValue < frequency)//아직 도달하지 못함
+            { 
                 rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i+1)*20) + "_none");
             }
-            else
+            else//보상을 받을 수 있음
             {
-                List<int> reward_done = XMLManager.ins.itemDB.user.reward_list;
-                bool done = false;
-                for(int j = 0; j < reward_done.Count; j++)
+                if(AWSManager.instance.userReward.Exists(x => x.reward_num == reward_num))
                 {
-                    if(reward_num == reward_done[j])
-                    {
-                        //rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + frequency + "_done");
-                        rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_done");
-                        rewardImages[i].gameObject.GetComponent<Button>().interactable = false;
-                        done = true;
-                        break;
-                    }
+                    rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_done");
+                    rewardImages[i].gameObject.GetComponent<Button>().interactable = false;
                 }
-                if(!done)
+                else
                 {
-                    //rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + frequency + "_reward");
                     rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_reward");
+                    rewardImages[i].gameObject.GetComponent<Button>().interactable = true;
                 }
-
+                
 
             }
 
@@ -68,23 +61,16 @@ public class RewardSlider : MonoBehaviour
     }
 
     
-
-    public void GetReward(int index)// 4 7 10 Text(or Image) 에서 가능
+    //Button Clicked
+    public void GetReward(int index)// 4 7 10 Text(or Image) 에서 가능 index 값 012
     {
         rewardImages[index].gameObject.GetComponent<Button>().interactable = false;
         rewardImages[index].sprite = Resources.Load<Sprite>("Reward/Number/" + ((index + 1) * 20) + "_done");
 
-        List<Reward> rewardPopupList = new List<Reward>();
-        for(int i = 0; i < island_rewards.Count; i++)
-        {
-            if(island_rewards[i].star_index == index)
-            {
-                rewardPopupList.Add(island_rewards[i]);
-            }
-        }
-        Debug.Log("reward index : " + index + " reward quan : " + rewardPopupList.Count);
+        
+        Debug.Log("reward index : " + index + " reward quan : " + island_rewards[index].rewardItems.Count);
         int reward_num = island_num * 3 + index;
-        rewardPopup.SetRewardList(rewardPopupList,reward_num);
+        rewardPopup.SetRewardList(island_rewards[index],reward_num);
        
     }
 }

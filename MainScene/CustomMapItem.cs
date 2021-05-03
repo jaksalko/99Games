@@ -6,67 +6,103 @@ using UnityEngine.SceneManagement;
 
 public class CustomMapItem : MonoBehaviour
 {
-    JsonAdapter jsonAdapter = new JsonAdapter();
+    
 
     public Text title;
     public Text maker;
     public Text moveCount;
-    public Toggle isClear;
+    public Text likes;
+    public Text play;
+    public Image difficulty;
+    public Image isClear;
     // Start is called before the first frame update
-    public JsonData itemdata;
 
+    public EditorMap itemdata;
+    public Map map;
     public bool isPlayed;
-    public void Initialize(JsonData item)
+    public void Initialize(EditorMap item)
     {
-        name = item.updateTime;
+        
+        name = item.title;
         itemdata = item;
         title.text = itemdata.title;
-        maker.text = itemdata.nickname;
-        moveCount.text = itemdata.moveCount.ToString();
+        maker.text = itemdata.maker;
+        moveCount.text = itemdata.move.ToString();
+        likes.text = itemdata.likes.ToString();
+        play.text = itemdata.play_count.ToString();
 
-        List<CustomStagePlayerData> myPlayData = GameManager.instance.customStagePlayerDatas;
-        isPlayed = false;
-        for (int i = 0; i < myPlayData.Count; i++)
+        difficulty.sprite = Resources.Load<Sprite>("Icon/Level/" + itemdata.level);
+        //isClear.sprite = Resources.Load<Sprite>();
+
+        List<List<int>> datas = Parser.StringToListList(itemdata.datas, itemdata.height, itemdata.width);
+        List<List<int>> styles = Parser.StringToListList(itemdata.styles, itemdata.height*itemdata.width, 3);
+        List<int> star_limit = Parser.StringToList(itemdata.star_limit);
+
+        Vector3 posA = default;
+        Vector3 posB = default;
+
+        bool isParfait = false;
+        for(int i = 0; i < datas.Count; i++)
         {
-            if(myPlayData[i].title == itemdata.title)
+            for(int j = 0; j < datas[i].Count; j++)
             {
-                isPlayed = true;
-                break;
+                if(datas[i][j] == BlockNumber.character)
+                {
+                    if(posA == default)
+                    {
+                        posA = new Vector3(j, 1, i);
+                    }
+                    else
+                    {
+                        posB = new Vector3(j, 1, i);
+                    }
+                }
+                else if(datas[i][j] == BlockNumber.upperCharacter)
+                {
+                    if (posA == default)
+                    {
+                        posA = new Vector3(j, 2, i);
+                    }
+                    else
+                    {
+                        posB = new Vector3(j, 2, i);
+                    }
+                }
+                else if(datas[i][j] >= BlockNumber.parfaitA && datas[i][j] <= BlockNumber.parfaitD)
+                {
+                    isParfait = true;
+                }
+                else if(datas[i][j] >= BlockNumber.parfaitA && datas[i][j] <= BlockNumber.parfaitD)
+                {
+                    isParfait = true;
+                }
             }
         }
 
+        map.Initialize(new Vector2(itemdata.height, itemdata.width),isParfait, posA, posB, datas, styles, star_limit);
+        map.map_title = itemdata.title;
+        moveCount.text = itemdata.move.ToString();
+
+        
     }
 
     public void PlayButton()
     {
-        /*
-        GameManager gameManager = GameManager.instance;
-        gameManager.playCustomData = this;
+        AWSManager aws = AWSManager.instance;
 
-        
-
-        UserData user = new UserData(gameManager.user.id, change_cash : 0, change_heart: -1, gameManager.user.stage);
-        var json = JsonUtility.ToJson(user);
-        StartCoroutine(jsonAdapter.API_POST("account/update", json, callback => {
-
-            gameManager.user.heart -= 1;
-
-        }));
-
-
-        
-
-
-        //popularity++
-        if (!isPlayed)
+        for (int i = 0; i < aws.editorMap.Count; i++)
         {
-            
-            json = JsonUtility.ToJson(itemdata);
-            StartCoroutine(jsonAdapter.API_POST("map/play", json , callback => { }));//popularity++
-
+            if(aws.editorMap[i].itemdata.title == itemdata.title)
+            {
+                GameManager.instance.customMap = aws.editorMap[i].map;
+                SceneManager.LoadScene("CustomMapPlayScene");//customMode Scene
+                break;
+            }
         }
+        
 
-        */
-        SceneManager.LoadScene("CustomMapPlayScene");//customMode Scene
+        
+
+        
     }
 }

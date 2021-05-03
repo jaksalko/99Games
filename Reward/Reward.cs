@@ -11,42 +11,144 @@ public class Reward : MonoBehaviour
 
     public int boong;
     public int heart;
+    public int skin_powder;
+    public int block_powder;
 
-    public Image rewardImage;
+    public RewardItem rewardItemPrefab;
+    public List<RewardItem> rewardItems;
+    UserInventory userInventory;
 
-    public Text rewardText;
+    RewardPopup rewardPopup;
+    AWSManager aws;
 
-    public void SetReward(int island_num, int index, string reward_name , int quan)
+    UserInfo copy_user;
+    UserHistory copy_history;
+    UserReward userReward;
+    public void SetReward(int island_num, int level, int boong , int heart , int block_powder , int skin_powder , string item)
     {
         island = island_num;
-        star_index = index;
+        star_index = level;
+        this.boong = boong;
+        this.heart = heart;
+        this.block_powder = block_powder;
+        this.skin_powder = skin_powder;
 
-        if(reward_name == "boong")
+
+        if(boong != 0)
         {
-            boong = quan;
-            rewardImage.sprite = Resources.Load<Sprite>("Reward/boong");
-            rewardText.text = boong + " 붕";
+            RewardItem reward = Instantiate(rewardItemPrefab);
+            reward.transform.SetParent(transform,false);
+            reward.SetRewardItem("Reward/boong", boong + " 붕");
+            rewardItems.Add(reward);
         }
-        else if(reward_name == "heart")
+        if(heart != 0)
         {
-            heart = quan;
-            rewardImage.sprite = Resources.Load<Sprite>("Reward/heart");
-            rewardText.text = heart + " ";
+            RewardItem reward = Instantiate(rewardItemPrefab);
+            reward.transform.SetParent(transform,false);
+            reward.SetRewardItem("Reward/heart", heart + " 개");
+            rewardItems.Add(reward);
+        }
+        if (block_powder != 0)
+        {
+            RewardItem reward = Instantiate(rewardItemPrefab);
+            reward.transform.SetParent(transform,false);
+            reward.SetRewardItem("Reward/block_powder", block_powder + " 개");
+            rewardItems.Add(reward);
+        }
+        if (skin_powder != 0)
+        {
+            RewardItem reward = Instantiate(rewardItemPrefab);
+            reward.transform.SetParent(transform,false);
+            reward.SetRewardItem("Reward/skin_powder", skin_powder + " 개");
+            rewardItems.Add(reward);
+        }
+
+        if(item != "none")
+        {
+            Debug.Log("item");
+            userInventory = new UserInventory(AWSManager.instance.userInfo.nickname , item);
+            RewardItem reward = Instantiate(rewardItemPrefab);
+            reward.transform.SetParent(transform,false);
+            reward.SetRewardItem("Reward/"+ item, item);//Image path , reward object
+            rewardItems.Add(reward);
         }
         else
         {
-            //something items..
+            Debug.Log("none");
+            userInventory = new UserInventory(AWSManager.instance.userInfo.nickname, "none");
+        }
+
+      
+    }
+
+    public void GetReward(RewardPopup popup)
+    {
+        aws = AWSManager.instance;
+
+        copy_user = aws.userInfo.DeepCopy();
+        copy_history = aws.userHistory.DeepCopy();
+        userReward = new UserReward(aws.userInfo.nickname, island * 3 + star_index);
+
+        rewardPopup = popup;
+        
+
+        copy_user.boong += boong;
+        copy_user.heart += heart;
+        copy_user.block_powder += block_powder;
+        copy_user.skin_powder += skin_powder;
+
+        copy_history.boong_get += boong;
+        copy_history.heart_get += heart;
+
+
+        
+        JsonAdapter.RewardRequest rewardRequest = new JsonAdapter.RewardRequest(copy_user, copy_history, userReward, userInventory);
+        JsonAdapter.instance.GetReward(rewardRequest, WebCallback);
+        
+        
+    }
+
+    void WebCallback(bool success)
+    {
+        if (success)
+        {
+            if (JsonAdapter.instance.EndLoading())
+            {
+                rewardPopup.GetRewardCallback();
+                aws.userInfo = copy_user;
+                aws.userHistory = copy_history;
+                aws.userReward.Add(userReward);
+                if (userInventory.item_name != "none")
+                    aws.userInventory.Add(userInventory);
+                //JsonAdapter.instance.CreateUserReward(userReward,GetRewardCallback);
+
+            }
+
+        }
+        else
+        {
+
+            Debug.LogError("fail load user");
         }
     }
 
-    public void GetReward()
+    void GetRewardCallback(bool success)
     {
-        UserInfo user = XMLManager.ins.itemDB.user;
-        user.boong += boong;
-        user.heart += heart;
+        if (success)
+        {
+            if (JsonAdapter.instance.EndLoading())
+            {
+                rewardPopup.GetRewardCallback();
+                //get all data
+            }
 
-
+        }
+        else
+        {
+            Debug.LogError("fail load user");
+            //back up all data
+        }
     }
-
     //something items...
 }
+

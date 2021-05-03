@@ -31,31 +31,32 @@ public class XMLManager : MonoBehaviour
     }
 
     //list of items 
-    public ItemDatabase itemDB;
+    public Database database;
 
     //save function
     public void SaveItems()
     {
-        //open new xml file
-        string path;
-        XmlSerializer serializer = new XmlSerializer(typeof(ItemDatabase));
 
-        itemDB.user.log_out = DateTime.Now.ToString("yyyyMMddHHmmss");
+        XmlSerializer serializer = new XmlSerializer(typeof(Database));
 
+        /*
+        if(database.userInfo != null)
+            database.userInfo.log_out = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
+        */
 #if UNITY_EDITOR
         using (FileStream stream = new FileStream(
             Application.dataPath + "/XML/item_data.xml", FileMode.Create))
         {
             StreamWriter sw = new StreamWriter(stream, Encoding.UTF8);
-            serializer.Serialize(sw, itemDB); // put into sml files)
+            serializer.Serialize(sw, database); // put into sml files)
             sw.Close();//important :)
         }
 
 
 #elif UNITY_IOS || UNITY_ANDROID
           
-        path = Application.persistentDataPath;
+        string path = Application.persistentDataPath;
         
         if(!Directory.Exists(Path.GetDirectoryName(path)))
         {
@@ -66,38 +67,35 @@ public class XMLManager : MonoBehaviour
             path + "/item_data.xml", FileMode.Create))
             {
                 StreamWriter sw = new StreamWriter(stream, Encoding.UTF8);
-                serializer.Serialize(sw, itemDB); // put into sml files)
+                serializer.Serialize(sw, database); // put into sml files)
                 sw.Close();//important :)
             }
 #endif
 
 
     }
-    void LoadExistXML(bool isExist)
-    {
-        Debug.Log("XML isExist" + isExist);
-    }
+   
     //load function
-    public void LoadItems(IsExist isExist)
+    public void LoadItems()
     {
         string path;
-        XmlSerializer serializer = new XmlSerializer(typeof(ItemDatabase));
+        XmlSerializer serializer = new XmlSerializer(typeof(Database));
 
 #if UNITY_EDITOR
         try
         {
             FileStream stream = new FileStream(
             Application.dataPath + "/XML/item_data.xml", FileMode.Open);
-            itemDB = serializer.Deserialize(stream) as ItemDatabase;
+            database = serializer.Deserialize(stream) as Database;
             stream.Close();
-            isExist(true);
+            
 
         }
         catch(System.Exception e)//doesn't exist file
         {
             Debug.LogWarning("LoadItems Exception Error : " + e.ToString());
             SaveItems();//create file
-            LoadItems(LoadExistXML);
+            LoadItems();
 
         }
 #elif UNITY_IOS || UNITY_ANDROID
@@ -107,7 +105,7 @@ public class XMLManager : MonoBehaviour
         //path += "datas";
         FileStream stream = new FileStream(
             path + "/item_data.xml", FileMode.Open);
-            itemDB = serializer.Deserialize(stream) as ItemDatabase;
+            database = serializer.Deserialize(stream) as Database;
             stream.Close();
         }
         catch(System.Exception e)
@@ -115,7 +113,7 @@ public class XMLManager : MonoBehaviour
 
             Debug.LogWarning("LoadItems Exception Error : " + e.ToString());
             SaveItems();//create file
-            LoadItems(LoadExistXML);
+            LoadItems();
 
         }
 #endif
@@ -149,24 +147,25 @@ public class XMLManager : MonoBehaviour
 
     public void Count_LogOut_Time()
     {
-        Debug.Log(itemDB.user.log_out);
-        DateTime log_out = DateTime.ParseExact(itemDB.user.log_out, "yyyyMMddHHmmss", null);
+        /*
+        Debug.Log(database.userInfo.log_out);
+        DateTime log_out = DateTime.ParseExact(database.userInfo.log_out, "yyyy-MM-dd HH:mm:ss", null);
         long sec = (long)(DateTime.Now - log_out).TotalSeconds;
         Debug.Log("sec : " + sec);
 
 
-        if (itemDB.user.heart < 5)
+        if (database.userInfo.heart < 5)
         {
             for (int i = 0; i < sec; i++)
             {
 
-                itemDB.user.heart_time--;
-                if (itemDB.user.heart_time <= 0)
+                database.userInfo.heart_time--;
+                if (database.userInfo.heart_time <= 0)
                 {
-                    itemDB.user.heart++;
-                    itemDB.user.heart_time = 600;
+                    database.userInfo.heart++;
+                    database.userInfo.heart_time = 600;
 
-                    if(itemDB.user.heart == 5)
+                    if(database.userInfo.heart == 5)
                     {
                         break;
                     }
@@ -176,10 +175,11 @@ public class XMLManager : MonoBehaviour
 
         SaveItems();
         PlayerPrefs.Save();
+        */
     }
-
+        
 }
-
+/*
 [Serializable]
 public class UserInfo
 {
@@ -187,7 +187,7 @@ public class UserInfo
     public int boong = 0; // 유저의 붕 갯수
     public int heart = 5; // 유저의 하트 갯수
     public int heart_time = 600; // 하트 충전 타이머
-    public int current_stage = 0; // 유저가 깨야하는 스테이지
+    public int stage_current = 0; // 유저가 깨야하는 스테이지
     public string log_out; //로그 아웃 시간 yyyy/MM/dd HH:mm
     public List<int> star_list; // 유저의 닉네임 (UNIQUE)
     public List<int> move_list; // 유저의 닉네임 (UNIQUE)
@@ -229,39 +229,47 @@ public class UserInfo
     
 
 }
-
+*/
 [Serializable]
-public class ItemDatabase
+public class Database
 {
+    /*
     //List<Dictionary<string, object>> data;
-    [XmlElement("User")]
-    public UserInfo user = new UserInfo();
-    
-    public void Initialize(bool facebook, string nickname)//NewGame
-    {
-        
-        //data = CSVReader.Read("makemoneydatasheet3");
-        Debug.Log("initialize");
-        user.nickname = nickname;
-        user.star_list = new List<int>{0};
-        user.move_list = new List<int>{99};
-        user.reward_list = new List<int>();
-        user.log_out = DateTime.Now.ToString("yyyyMMddHHmmss");
+    [XmlElement("UserInfo")]
+    public UserInfo userInfo = new UserInfo();
 
-        user.mySkinList = new List<int> { 0,1};
-        user.myStyleList = new List<int> { 0 };
-        user.facebook = facebook;
+    [XmlElement("UserHistory")]
+    public UserHistory userHistory = new UserHistory();
+
+    [XmlArray("UserReward")]
+    public List<UserReward> userReward = new List<UserReward>();
+
+    [XmlArray("UserStage")]
+    public List<UserStage> userStage = new List<UserStage>();
+
+    [XmlArray("UserInventory")]
+    public List<UserInventory> userInventory = new List<UserInventory>();
+
+    [XmlArray("UserFriend")]
+    public List<UserFriend> userFriend = new List<UserFriend>();
+
+    //EditorMap
+
+    public void InitializeInfo(string facebook, string nickname)//NewGame
+    {
+        userInfo = new UserInfo(nickname, facebook);
+        userHistory = new UserHistory(nickname);
+        
+        Debug.Log("initialize");
         PlayerPrefs.SetString("nickname",nickname);
         XMLManager.ins.SaveItems();
-
     }
 
-    public void AddRewardList(int reward_num)
+    public void InitializeHistory(string nickname)
     {
-        user.reward_list.Add(reward_num);
-        XMLManager.ins.SaveItems();
-
+        userHistory.nickname = nickname;
     }
+    
     public IEnumerator StartTimer()
     {
         float wait_second = 1f;
@@ -272,23 +280,23 @@ public class ItemDatabase
             if(play_sec == 60)
             {
                 play_sec = 0;
-                user.playTime++;
+                userHistory.play_time++;
             }
 
-            if(user.heart < 5)
+            if(userInfo.heart < 5)
             {
-                user.heart_time -= 1;
-                if(user.heart_time == 0)
+                userInfo.heart_time -= 1;
+                if(userInfo.heart_time == 0)
                 {
-                    user.heart++;
-                    user.heart_time = 600;
+                    userInfo.heart++;
+                    userInfo.heart_time = 600;
                     XMLManager.ins.SaveItems();
                     
                 }
             }
             else
             {
-                user.heart_time = 600;
+                userInfo.heart_time = 600;
             }
             //Debug.Log("heart time " + user.heart_time);
             
@@ -297,6 +305,6 @@ public class ItemDatabase
         }
     }
       
-
+    */
 
 }

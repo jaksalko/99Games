@@ -5,13 +5,15 @@ using UnityEngine.UI;
 using UniRx;
 using UniRx.Triggers;
 using System;
+using System.Linq;
+
 using UnityEngine.SceneManagement;
 
 
 public class MapGenerator : MonoBehaviour
 {
     public Button completeButton;
-
+    public Image eraseButtonImage;
     [Header("Prefabs")]
     public Indexer blockPositionPrefab;
 
@@ -29,10 +31,11 @@ public class MapGenerator : MonoBehaviour
 
 
     [Header("Holder")]
-    public Holder positionHolder;
-    public Holder firstFloorHolder;
-    public Holder secondFloorHolder;
-    public Holder thirdFloorHolder;
+    public Holder[] holders;
+    public Holder positionHolder;//0
+    public Holder firstFloorHolder;//1
+    public Holder secondFloorHolder;//2
+    public Holder thirdFloorHolder;//3
 
     [Header("Condition")]
     public int character_count;
@@ -47,9 +50,12 @@ public class MapGenerator : MonoBehaviour
     RaycastHit hit;
 
     Button selectedButton;
-    int blockNumber;
-    int styleNumber;
-    string blockPrefabString;
+    int blockNumber = 999;
+    int styleNumber = 999;
+    int temp_blockNumber;
+    int temp_styleNumber;
+    public List<int> placeableFloor;
+
 
     
     public Text warning;
@@ -57,6 +63,7 @@ public class MapGenerator : MonoBehaviour
     public GameObject gameResource;//Simulator object
     public GameObject generatorResource;//MapGenerator Object
 
+    public RectTransform bottomUI;
     
 
     bool editMode = false;
@@ -67,12 +74,18 @@ public class MapGenerator : MonoBehaviour
     public Button moveButton;
     public Button rotateButton;
 
+    public Button[] characterButtons; //0 1
+    public Button[] parfaitButtons; // 0 1 2 3
+
     public GameObject editPopup;
     public GameObject backPopup;
 
 
+    public Material make_skybox;
+    public Material play_skybox;
+
     public bool activeClick = true;
-   
+    public bool moveBlock = false;
     private void Awake()
     {
         //maxSize = GameManager.instance.maxSize; //고정되었습니다
@@ -106,6 +119,17 @@ public class MapGenerator : MonoBehaviour
                .Select(mouse => Input.mousePosition)
                .Subscribe(mouse => SelectBlock(mouse));
 
+        
+        this.UpdateAsObservable()
+            .Where(_ => !activeClick)
+            .Where(_ => editMode)
+            .Where(_ => moveBlock)
+              .Where(_ => Input.GetMouseButtonDown(0))
+               .Select(ray => cam.ScreenPointToRay(Input.mousePosition))
+               .Subscribe(ray => MakeBlock(ray));
+
+
+
         /*
         this.UpdateAsObservable()
            .Where(_ => editMode)
@@ -116,21 +140,36 @@ public class MapGenerator : MonoBehaviour
 #else
 
         this.UpdateAsObservable()
-                .Where(_ => !erase)
+                .Where(_ => !editMode)
                 .Where(_ => Input.touchCount > 0)
                 .Where(_ => Input.GetTouch(0).phase == TouchPhase.Moved)
                .Select(ray => cam.ScreenPointToRay(Input.GetTouch(0).position))
                .Subscribe(ray => MakeBlock(ray));
 
         this.UpdateAsObservable()
-               .Where(_ => erase)
-               .Where(_ => Input.touchCount > 0)
-               .Where(_ => Input.GetTouch(0).phase == TouchPhase.Began)
-              .Select(ray => cam.ScreenPointToRay(Input.GetTouch(0).position))
-              .Subscribe(ray => EraseBlock(ray));
+                .Where(_ => activeClick)
+                .Where(_ => editMode)
+                .Where(_ => Input.touchCount > 0)
+                .Where(_ => Input.GetTouch(0).phase == TouchPhase.Ended)
+              .Select(mouse => Input.GetTouch(0).position)
+              .Subscribe(mouse => SelectBlock(mouse));
+
+        this.UpdateAsObservable()
+                .Where(_ => !activeClick)
+                .Where(_ => editMode)
+                .Where(_ => moveBlock)
+                .Where(_ => Input.touchCount > 0)
+                    .Where(_ => Input.GetTouch(0).phase == TouchPhase.Began)
+                    .Select(ray => cam.ScreenPointToRay(Input.GetTouch(0).position))
+                    .Subscribe(ray => MakeBlock(ray));
 #endif
-       
-       
+
+
+    }
+
+    private void Start()
+    {
+        SoundManager.instance.ChangeBGM(SceneManager.GetActiveScene().buildIndex);//섬 7-11
     }
     public void BackPopupClicked()
     {
@@ -155,9 +194,105 @@ public class MapGenerator : MonoBehaviour
     public void ChangeMode()
     {
         editMode = editMode ? false : true;
+        if(editMode)
+        {
+            eraseButtonImage.sprite = Resources.Load<Sprite>("Editor/Frame/eraser_on");
+            bottomUI.anchoredPosition += Vector2.down * 470f;
+            characterButtons[0].gameObject.SetActive(false);
+            characterButtons[1].gameObject.SetActive(false);
+        }
+        else
+        {
+            eraseButtonImage.sprite = Resources.Load<Sprite>("Editor/Frame/eraser_off");
+            //bottomUI.position += Vector3.up * 470f;
+            bottomUI.anchoredPosition += Vector2.up * 470f;
+            characterButtons[0].gameObject.SetActive(true);
+            characterButtons[1].gameObject.SetActive(true);
+        }
     }
 
-    void SelectBlock(Vector3 mousePosition)
+    void MakeBlock(Ray ray)
+    {
+        if (Physics.Raycast(ray, out hit, 1000))
+        {
+            if (hit.transform.CompareTag("Indexer"))
+            {
+
+                Indexer indexer = hit.transform.GetComponent<Indexer>();
+
+                if (indexer.placeable)
+                {
+
+                    int blockNumber_modification = blockNumber;
+                    //blocknumber 조정 : cracker , parfait , cloud , obstacle , character
+                    if (indexer.Floor == 1)
+                    {
+                        if (blockNumber >= BlockNumber.cloudUp && blockNumber <= BlockNumber.cracker_2)
+                        {
+                            blockNumber_modification += 10;
+                        }
+                    }
+                    else if (indexer.Floor == 2)
+                    {
+                        blockNumber_modification += 10;
+
+                    }
+                    Debug.Log("make block number : " + blockNumber_modification);
+                    Block newBlock = blockFactory.EditorCreateBlock(blockNumber_modification, styleNumber, new Vector3(indexer.X, indexer.Z));
+                    indexer.AddBlock(newBlock);
+                    indexer.CheckPlaceableIndex(block_floor: placeableFloor);
+                    newBlock.transform.SetParent(holders[indexer.Floor].transform);
+
+                    if (blockNumber >= BlockNumber.parfaitA && blockNumber <= BlockNumber.parfaitD)
+                    {
+                        parfait_count++;
+                        selectedButton.interactable = false;
+                        blockNumber = 999;//더 이상 배치할 수 없음
+                    }
+                    if (blockNumber == BlockNumber.character)
+                    {
+                        character_count++;
+                        selectedButton.interactable = false;
+                        blockNumber = 999;//더 이상 배치할 수 없음
+
+                        if (styleNumber == 0)
+                            positionA = new Vector3(indexer.X + 1, indexer.Floor, indexer.Z + 1);
+                        else
+                            positionB = new Vector3(indexer.X + 1, indexer.Floor, indexer.Z + 1);
+                    }
+
+                    if(moveBlock)//move block
+                    {
+                        moveBlock = false;
+
+                        blockNumber = temp_blockNumber;
+                        styleNumber = temp_styleNumber;
+
+                        Update_Placeable_Floor(blockNumber);
+                        StartCoroutine(ActiveClickTimer());
+                    }
+
+
+                    if (CheckCondition().Item1 && CheckCondition().Item2)
+                    {
+                        completeButton.interactable = true;
+                    }
+                    else
+                    {
+                        completeButton.interactable = false;
+                    }
+                    checkListPopup.SetCheckList(character_count, parfait_count);
+
+
+                }
+
+            }
+        }
+
+
+    }
+
+    void SelectBlock(Vector3 mousePosition)//수정 상태일때 블럭 클릭.
     {
         
         Ray ray = cam.ScreenPointToRay(mousePosition);
@@ -185,8 +320,8 @@ public class MapGenerator : MonoBehaviour
                     {
                         rotateButton.interactable = false;
                     }
-                    
-                    editPopup.transform.position = mousePosition + Vector3.down * 100;
+                    Vector3 index_position = cam.WorldToScreenPoint(selected_indexer.transform.position);
+                    editPopup.transform.position = new Vector3(index_position.x,index_position.y + 50, 0);
                     editPopup.SetActive(true);
                 }
 
@@ -207,21 +342,114 @@ public class MapGenerator : MonoBehaviour
 
     public void EraseBlock()
     {
+        int selected_indexer_data = selected_indexer.data;
+        if (selected_indexer_data == BlockNumber.character || selected_indexer_data == BlockNumber.upperCharacter)
+        {
+            character_count--;
+            
+           
+            int style = selected_indexer.blocks[selected_indexer.blocks.Count - 1].style;
+            characterButtons[style].interactable = true;
+            
+        }
+        else if((selected_indexer_data >= BlockNumber.parfaitA && selected_indexer_data <= BlockNumber.parfaitD)
+            ||(selected_indexer_data >= BlockNumber.upperParfaitA && selected_indexer_data <= BlockNumber.upperParfaitD))
+        {
+            parfait_count--;
+
+            int parfait_num = selected_indexer_data % 10 - 1;
+            parfaitButtons[parfait_num].interactable = true;
+        }
+
         selected_indexer.EraseBlock();
+        selected_indexer.CheckPlaceableIndex(block_floor: placeableFloor);
         editPopup.SetActive(false);
         StartCoroutine(ActiveClickTimer());
-    }
 
+        
+
+        if (CheckCondition().Item1 && CheckCondition().Item2)
+        {
+            completeButton.interactable = true;
+        }
+        else
+        {
+            completeButton.interactable = false;
+        }
+        checkListPopup.SetCheckList(character_count, parfait_count);
+
+    }
+    void Update_Placeable_Floor(int block_num)
+    {
+        List<int> placeableList = new List<int>();
+
+        if (BlockNumber.first_floor.Contains(block_num))
+        {
+            placeableList.Add(1);
+
+            if (block_num != BlockNumber.normal)
+                placeableList.Add(2);
+        }
+        else if (BlockNumber.second_floor.Contains(block_num))
+        {
+            placeableList.Add(2);
+
+            if (block_num == BlockNumber.character || block_num == BlockNumber.obstacle || (block_num >= BlockNumber.parfaitA && block_num <= BlockNumber.parfaitD))
+            {
+                placeableList.Add(3);
+            }
+        }
+        else if (BlockNumber.third_floor.Contains(block_num))
+        {
+            placeableList.Add(3);
+        }
+
+        placeableFloor = placeableList;
+
+        for (int i = 0; i < indexer.GetLength(0); i++)
+        {
+            for (int j = 0; j < indexer.GetLength(1); j++)
+            {
+                indexer[i, j].CheckPlaceableIndex(placeableFloor);
+            }
+        }
+
+    }
     public void MoveBlock()
     {
+        (int, int) block_data = selected_indexer.MoveBlock();
+
+        temp_blockNumber = blockNumber;
+        temp_styleNumber = styleNumber;
+
+        blockNumber = block_data.Item1;
+        styleNumber = block_data.Item2;
+
+        Update_Placeable_Floor(blockNumber);
+        
+
         editPopup.SetActive(false);
-        StartCoroutine(ActiveClickTimer());
+        moveBlock = true;
+        //StartCoroutine(ActiveClickTimer());
+
+
+        if (CheckCondition().Item1 && CheckCondition().Item2)
+        {
+            completeButton.interactable = true;
+        }
+        else
+        {
+            completeButton.interactable = false;
+        }
+        checkListPopup.SetCheckList(character_count, parfait_count);
+
     }
     public void RotateBlock()
     {
         selected_indexer.RotateBlock();
-        //editPopup.SetActive(false);
-        
+        editPopup.SetActive(false);
+        StartCoroutine(ActiveClickTimer());
+
     }
 
     IEnumerator ActiveClickTimer()
@@ -245,117 +473,11 @@ public class MapGenerator : MonoBehaviour
         secondFloorHolder.ClearHolder();
         thirdFloorHolder.ClearHolder();
 
-        
-        /*
-        blockPrefab[BlockNumber.characterA].SetActive(false);//character
-        blockPrefab[BlockNumber.characterA].transform.position = default;
-
-
-        blockPrefab[BlockNumber.characterB].SetActive(false);//character
-        blockPrefab[BlockNumber.characterB].transform.position = default;
-        */
-
        
     }
 
 
-    void EraseBlock(Ray ray)
-    {
-        if (Physics.Raycast(ray, out hit, 1000))
-        {
-            if (hit.transform.CompareTag("Indexer"))
-            {
-                
-                Indexer indexer = hit.transform.GetComponent<Indexer>();
-                if(indexer.Floor != 0)
-                {
-                    switch(indexer.Floor)
-                    {
-                        case 1://first floor
-                            for(int i = 0; i < firstFloorHolder.transform.childCount; i++)
-                            {
-                                Transform firstFloorObject = firstFloorHolder.transform.GetChild(i);
-                                if(firstFloorObject.localPosition.x == indexer.X && firstFloorObject.localPosition.z == indexer.Z)
-                                {
-                                    Destroy(firstFloorObject.gameObject);
-                                    indexer.Floor = 0;
-                                    indexer.data = BlockNumber.broken;//obstacle
-                                    indexer.isFull = false;
-                                    break;
-                                }
-                            }
-                            
-                            break;
-                        case 2://second floor
-                            for (int i = 0; i < secondFloorHolder.transform.childCount; i++)
-                            {
-                                Transform secondFloorObject = secondFloorHolder.transform.GetChild(i);
-                                if (secondFloorObject.localPosition.x == indexer.X && secondFloorObject.localPosition.z == indexer.Z)
-                                {
-                                    if(indexer.data >= BlockNumber.parfaitA && indexer.data <= BlockNumber.parfaitD)
-                                    {
-                                        Debug.LogWarning("Parfait erase");
-                                    }
-                                    Destroy(secondFloorObject.gameObject);
-                                    indexer.Floor = 1;
-                                    indexer.data = BlockNumber.normal;
-                                    indexer.isFull = false;
-                                    break;
-                                }
-                            }
-                           
-                            break;
-                        case 3://third floor
-                            for (int i = 0; i < thirdFloorHolder.transform.childCount; i++)
-                            {
-                                Transform thirdFloorObject = thirdFloorHolder.transform.GetChild(i);
-                                if (thirdFloorObject.localPosition.x == indexer.X && thirdFloorObject.localPosition.z == indexer.Z)
-                                {
-                                    if (indexer.data >= BlockNumber.upperParfaitA && indexer.data <= BlockNumber.upperParfaitD)
-                                    {
-                                        Debug.LogWarning("Parfait erase");
-                                    }
-                                    Destroy(thirdFloorObject.gameObject);
-                                    indexer.Floor = 2;
-                                    indexer.data = BlockNumber.upperNormal;
-                                    indexer.isFull = false;
-                                    break;
-                                }
-                            }
-                           
-                            break;
-
-                    }
-                    if (indexer.data == BlockNumber.character || indexer.data == BlockNumber.upperCharacter)//character erase
-                    {
-                        /*
-                        if(blockPrefab[BlockNumber.characterA].activeSelf && blockPrefab[BlockNumber.characterA].transform.position.x == indexer.X && blockPrefab[BlockNumber.characterA].transform.position.z == indexer.Z)
-                        {
-                            //char1 erase
-                            blockPrefab[BlockNumber.characterA].SetActive(false);
-                            blockPrefab[BlockNumber.characterA].transform.position = default;
-                            indexer.Floor--;
-                           
-                        }
-                        if (blockPrefab[BlockNumber.characterB].activeSelf && blockPrefab[BlockNumber.characterB].transform.position.x == indexer.X && blockPrefab[BlockNumber.characterB].transform.position.z == indexer.Z)
-                        {
-                            //char2 erase
-                            blockPrefab[BlockNumber.characterB].SetActive(false);
-                            blockPrefab[BlockNumber.characterB].transform.position = default;
-                            indexer.Floor--;
-                        }
-                        */
-                        if (indexer.Floor == 1)
-                            indexer.data = BlockNumber.normal;
-                        else if (indexer.Floor == 2)
-                            indexer.data = BlockNumber.upperNormal;
-
-                        indexer.isFull = false;
-                    }
-                }
-            }
-        }
-    }
+    
 
     (bool,bool) CheckCondition()
     {
@@ -383,139 +505,7 @@ public class MapGenerator : MonoBehaviour
         return (check_character, check_parfait);
     }
 
-    void MakeBlock(Ray ray)
-    {
-        if(Physics.Raycast(ray,out hit , 1000))
-        {
-            if(hit.transform.CompareTag("Indexer"))
-            {
-                    
-                Indexer indexer = hit.transform.GetComponent<Indexer>();
-
-                if (indexer.Floor == 0 && blockNumber < BlockNumber.upperNormal)//아무것도 깔려있지 않은 상태에서는 노말블럭 또는 깨지는 블럭 또는 구름블럭
-                {
-                    Block newBlock = blockFactory.EditorCreateBlock(blockNumber, styleNumber, new Vector3(indexer.X, indexer.Z));
-                    indexer.AddBlock(newBlock);
-                    
-                    newBlock.transform.SetParent(firstFloorHolder.transform);
-                    
-                    
-                    if (blockNumber != BlockNumber.normal)//2층 블럭이 아니면 더이상 위에 무엇을 올릴 수가 없으므로 
-                        indexer.isFull = true;
-
-
-                }
-                else if (indexer.Floor == 1 && !indexer.isFull && blockNumber >= BlockNumber.cloudUp && blockNumber < BlockNumber.upperCharacter)//바닥이 깔려있는 상태에서 선택 블럭이 노말블럭이 아니며
-                {
-                    if (blockNumber != BlockNumber.upperNormal)//2층 블럭이 아니면 더이상 위에 무엇을 올릴 수가 없으므로 
-                        indexer.isFull = true;
-
-                    int realBlockNumber = blockNumber;
-                    
-
-                    if (blockNumber < BlockNumber.upperNormal)
-                    {
-                        realBlockNumber += BlockNumber.upperNormal;
-                    }
-                    Block newBlock = blockFactory.EditorCreateBlock(realBlockNumber, styleNumber, new Vector3(indexer.X, indexer.Z));
-                    indexer.AddBlock(newBlock);
-                    newBlock.transform.SetParent(secondFloorHolder.transform);
-
-                    if (realBlockNumber >= BlockNumber.parfaitA && realBlockNumber <= BlockNumber.parfaitD)
-                    {
-                        parfait_count++;
-                        selectedButton.interactable = false;
-                        blockNumber = 999;//더 이상 배치할 수 없음
-
-                        
-                        //설치한 파르페 버튼 비활성화하기
-                    }
-
-                    if(realBlockNumber == BlockNumber.character)
-                    {
-                        character_count++;
-                        selectedButton.interactable = false;
-                        blockNumber = 999;//더 이상 배치할 수 없음
-
-                        if (styleNumber == 0)
-                            positionA = new Vector3(indexer.X + 1, 1, indexer.Z + 1);
-                        else
-                            positionB = new Vector3(indexer.X+1, 1, indexer.Z+1);
-
-                    }
-                    
-                    if(CheckCondition().Item1 && CheckCondition().Item2)
-                    {
-                        completeButton.interactable = true;
-                    }
-                    else
-                    {
-                        completeButton.interactable = false;
-                    }
-                    checkListPopup.SetCheckList(character_count, parfait_count);
-
-
-
-
-
-                }
-                //3층은 장애물과 캐릭터, 파르페만 존재할 수 있음.
-                else if (indexer.Floor == 2 && !indexer.isFull
-                    && (blockNumber >= BlockNumber.obstacle
-                    || (blockNumber >= BlockNumber.character && blockNumber <= BlockNumber.parfaitD)))
-                {
-                    int realBlockNumber = blockNumber + 10;
-                    indexer.isFull = true;
-
-                    Block newBlock = blockFactory.EditorCreateBlock(realBlockNumber, styleNumber, new Vector3(indexer.X, indexer.Z));
-                    indexer.AddBlock(newBlock);
-                    newBlock.transform.SetParent(thirdFloorHolder.transform);
-
-
-                    if (realBlockNumber >= BlockNumber.upperParfaitA && realBlockNumber <= BlockNumber.upperParfaitD)
-                    {
-                        parfait_count++;
-                        selectedButton.interactable = false;
-                        blockNumber = 999;//더 이상 배치할 수 없음
-
-                        checkListPopup.SetCheckList(character_count, parfait_count);
-                        //설치한 파르페 버튼 비활성화하기
-                    }
-
-                    if (realBlockNumber == BlockNumber.upperCharacter)
-                    {
-                        character_count++;
-                        selectedButton.interactable = false;
-                        blockNumber = 999;//더 이상 배치할 수 없음
-                        checkListPopup.SetCheckList(character_count, parfait_count);
-
-                        if(styleNumber == 0)
-                            positionA = new Vector3(indexer.X+1, 2,indexer.Z+1);
-                        else
-                            positionB = new Vector3(indexer.X+1, 2, indexer.Z+1);
-                    }
-
-                    if (CheckCondition().Item1 && CheckCondition().Item2)
-                    {
-                        completeButton.interactable = true;
-                    }
-                    else
-                    {
-                        completeButton.interactable = false;
-                    }
-                    checkListPopup.SetCheckList(character_count, parfait_count);
-
-                }
-                   
-            }
-               
-                
-                
-                
-        }
-        
-        
-    }
+   
 
 #region Editor
     public void BlockPositionEditor()
@@ -589,13 +579,24 @@ public class MapGenerator : MonoBehaviour
     //Block Select Button Function
     public void SelectBlockButtonClicked(EditorBlock block)
     {
-        editMode = false;
+        //editMode = false;
+
 
         blockNumber = block.blockNumber;
         styleNumber = block.styleNumber;
-        blockPrefabString = block.blockPrefab;
 
-        selectedButton = block.GetComponent<Button>();
+        placeableFloor = block.placeableFloor();
+
+
+        for (int i = 0; i < indexer.GetLength(0); i++)
+        {
+            for (int j = 0; j < indexer.GetLength(1); j++)
+            {
+                indexer[i, j].CheckPlaceableIndex(placeableFloor);
+            }
+        }
+
+        selectedButton = block.GetComponent<Button>();//한개만 생성가능한 블럭을 비활성화 하기 위함.
   
     }
 
@@ -705,6 +706,9 @@ public class MapGenerator : MonoBehaviour
     //Simulating Button Function
     public void StartSimulatorButtonClicked()
     {
+        RenderSettings.skybox = play_skybox;
+
+
         GetEditorMap();
 
         generatorResource.SetActive(false);

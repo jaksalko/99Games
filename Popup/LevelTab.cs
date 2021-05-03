@@ -20,6 +20,7 @@ public class LevelTab : Tab
 
     public void Sort()
     {
+        /*
         int sort = sortDropdown.value;
 
         foreach (CustomMapItem item in customMapItems)
@@ -44,6 +45,7 @@ public class LevelTab : Tab
         {
             item.transform.SetParent(content);
         }
+        */
     }
     // Start is called before the first frame update
     void Start()

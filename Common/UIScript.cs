@@ -11,16 +11,24 @@ public class UIScript : MonoBehaviour
 {
     protected GameManager gameManager = GameManager.instance;
     protected AWSManager awsManager = AWSManager.instance;
+    protected XMLManager xmlManager = XMLManager.ins;
+    protected JsonAdapter jsonAdapter = JsonAdapter.instance;
     
     void Awake()
     {
         gameManager = GameManager.instance;
         awsManager = AWSManager.instance;
+        xmlManager = XMLManager.ins;
+        jsonAdapter = JsonAdapter.instance;
+
     }
     void Start()
     {
         gameManager = GameManager.instance;
         awsManager = AWSManager.instance;
+        xmlManager = XMLManager.ins;
+        jsonAdapter = JsonAdapter.instance;
+
     }
     public void Load_Island(int stage)
     {

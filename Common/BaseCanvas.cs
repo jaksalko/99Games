@@ -70,15 +70,15 @@ public class BaseCanvas : MonoBehaviour
 			userState.SetActive(true);
 		}
 
-		boong_text.text = xmlManager.itemDB.user.boong.ToString();
-		heart_text.text = xmlManager.itemDB.user.heart + "/5";
+		boong_text.text = awsManager.userInfo.boong.ToString();
+		heart_text.text = awsManager.userInfo.heart + "/5";
 		heartTime_text.text = IntToTimerString();
 	}
 
 	string IntToTimerString()
 	{
 		string time_string = "";
-		int heart_time = xmlManager.itemDB.user.heart_time;
+		int heart_time = awsManager.userInfo.heart_time;
 		int min = 0;
 		int sec = 0;
 		while(heart_time != 0)

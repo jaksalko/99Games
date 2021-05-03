@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using System.Text.RegularExpressions;
+using System;
 
 using Amazon;
 using Amazon.CognitoIdentity;
@@ -20,6 +21,7 @@ using System.Security.Cryptography;
 public class LoadingScene : MonoBehaviour
 {
     bool isAuth;
+    string facebookUserId;
     public Text id;
     public Image fade;
     public Image title;
@@ -37,78 +39,100 @@ public class LoadingScene : MonoBehaviour
 
     AWSManager awsManager = AWSManager.instance;
     XMLManager xmlManager = XMLManager.ins;
+    JsonAdapter jsonAdapter = JsonAdapter.instance;
+
     private void Awake()
     {
         
         StartCoroutine(Interpolation());//Animation Effect
-        
-        
+
+       
+
     }
-    void XML_Load_Callback(bool isExist)
-    {
-        Debug.Log("xml exist : " + isExist);
-    }
+   
     void Start()
     {
 
         //PlayerPrefs.SetInt("tutorial",1);
-        PlayerPrefs.SetInt("tutorial", IslandData.tutorial + 1);//튜토리얼 건너 뛰기
+        //PlayerPrefs.SetInt("tutorial", IslandData.tutorial + 1);//튜토리얼 건너 뛰기
 
         awsManager = AWSManager.instance;
         xmlManager = XMLManager.ins;
+        jsonAdapter = JsonAdapter.instance;
 
+        xmlManager.LoadItems();//if xml file not exist create it.
+        jsonAdapter.GetAllUserInfo(WebRequestCallback);
+        jsonAdapter.GetAllEditorMap(WebRequestCallback);
 
         
-        xmlManager.LoadItems(XML_Load_Callback);
+
         
-
-        if(PlayerPrefs.GetString("Login", "none") == "none")//계정 생성하지 않았으면
-        {
-            FB.Init();
-            facebook_login_button.gameObject.SetActive(true);
-            guest_login_button.gameObject.SetActive(true);
-        }
-        else//이미 계정이 있는 유저
-        {
-            xmlManager.Count_LogOut_Time();
-
-            if(xmlManager.itemDB.user.facebook)
-            {
-
-                FB.Init(delegate () {
-
-                    if (FB.IsLoggedIn)
-                    { //User already logged in from a previous session
-                       
-                        awsManager.AddLogin_To_Credentials(AccessToken.CurrentAccessToken.TokenString);
-                        awsManager.Load_UserInfo(Callback_Load_UserInfo);
-                    }
-                    else
-                    {
-                        Debug.Log("critical error");
-                        var perms = new List<string>() { "email" };
-                        FB.LogInWithReadPermissions(perms, FacebookNotLoggedInCallback);
-                        //Critical Error!
-                    }
-                });
-
-            }
-            else
-            {
-                
-                awsManager.Load_UserInfo(Callback_Load_UserInfo);
-            }
-
-
-           
-            play_button.interactable = true;
-        }
+        
 
 
 
         
 
     }
+
+    void LoginWithUserState()
+    {
+        string playerPrefs_login = PlayerPrefs.GetString("Login", "none");
+
+
+        //스마일게이트 제출용
+        //string playerPrefs_login = PlayerPrefs.GetString("Login", "guest");
+        //PlayerPrefs.SetString("nickname", "스마게");
+        //PlayerPrefs.SetInt("tutorial", 7);
+        //
+
+
+        if (playerPrefs_login == "none")//계정 생성하지 않았으면
+        {
+
+            //facebook_login_button.gameObject.SetActive(true);
+            guest_login_button.gameObject.SetActive(true);
+        }
+        else if (playerPrefs_login == "facebook")
+        {
+            Debug.Log("facebook login");
+            xmlManager.Count_LogOut_Time();
+
+            FB.Init(delegate () {
+
+                if (FB.IsLoggedIn)
+                { //User already logged in from a previous session
+
+                    awsManager.AddLogin_To_Credentials(AccessToken.CurrentAccessToken.TokenString);
+
+                    //editormap 빼고 전부 다
+                    //LoadUserData();
+                    jsonAdapter.GetAllUserData(PlayerPrefs.GetString("nickname", "pingpengboong"), GetWebRequestCallback);
+                }
+                else
+                {
+                    Debug.LogError("critical error");
+                    //var perms = new List<string>() { "email" };
+                    //FB.LogInWithReadPermissions(perms, FacebookNotLoggedInCallback);
+                    //Critical Error!
+                }
+            });
+        }
+        else if (playerPrefs_login == "guest")
+        {
+            Debug.Log("Hi " + PlayerPrefs.GetString("nickname", "pingpengboong") + "Guest Login");
+            //LoadUserData();
+            jsonAdapter.GetAllUserData(PlayerPrefs.GetString("nickname", "pingpengboong"), GetWebRequestCallback);
+
+
+        }
+        else
+        {
+            Debug.LogWarning("login error");
+        }
+    }
+    
+    /*
     void FacebookNotLoggedInCallback(ILoginResult result)//처음 앱을 사용할 경우 또는 다시 앱을 설치했을 경우
     {
         if (FB.IsLoggedIn)//success get token
@@ -116,7 +140,7 @@ public class LoadingScene : MonoBehaviour
 
             Debug.Log("You get Access Token : " + AccessToken.CurrentAccessToken.UserId);
             awsManager.AddLogin_To_Credentials(AccessToken.CurrentAccessToken.TokenString);
-            awsManager.Load_UserInfo(Callback_Load_UserInfo);
+            jsonAdapter.GetUserInfo(xmlManager.database.userInfo.nickname);
         }
         else//error...
         {
@@ -129,8 +153,9 @@ public class LoadingScene : MonoBehaviour
         //xml -> dynamodb
 
     }
-    
+    */
 
+    #region 로그인 버튼
     public void SignUpGuest()
     {
         isAuth = false;
@@ -140,72 +165,99 @@ public class LoadingScene : MonoBehaviour
     public void SignUpWithFacebook()//SignUp Button Click Event
     {
         isAuth = true;
-        accountPanel.SetActive(true);
-        
+
+        FB.Init(delegate () {
+
+            if (FB.IsLoggedIn)
+            {
+                facebookUserId = AccessToken.CurrentAccessToken.UserId;
+                awsManager.AddLogin_To_Credentials(AccessToken.CurrentAccessToken.TokenString);
+
+                if(awsManager.allUserInfo.Exists(x => x.facebook_token == facebookUserId))
+                {
+                    PlayerPrefs.SetString("nickname", "pingpengboong");
+                    jsonAdapter.GetAllUserData(PlayerPrefs.GetString("nickname", "pingpengboong"), GetWebRequestCallback);
+                }
+                else
+                {
+                    accountPanel.SetActive(true);
+                }
+                
+            }
+            else
+            {
+                var perms = new List<string>() { "email" };
+                FB.LogInWithReadPermissions(perms, FacebookLoginCallback);
+            }
+        });
+        //페이스북 토큰 요청
+
+
+        //accountPanel.SetActive(true);
+
 
     }
     void FacebookLoginCallback(ILoginResult result)//처음 앱을 사용할 경우 또는 다시 앱을 설치했을 경우
     {
         if (FB.IsLoggedIn)//success get token
         {
-            
-            Debug.Log("You get Access Token : " + AccessToken.CurrentAccessToken.UserId);
+            facebookUserId = AccessToken.CurrentAccessToken.UserId;
+            Debug.Log("You get Access Token : " + facebookUserId);
             awsManager.AddLogin_To_Credentials(AccessToken.CurrentAccessToken.TokenString);
+
+            if (awsManager.allUserInfo.Exists(x => x.facebook_token == facebookUserId))
+            {
+                PlayerPrefs.SetString("Login", "facebook");
+                PlayerPrefs.SetString("nickname", "pingpengboong");
+                jsonAdapter.GetAllUserData(PlayerPrefs.GetString("nickname", "pingpengboong"), GetWebRequestCallback);
+            }
+            else
+            {
+                accountPanel.SetActive(true);
+            }
             
-            awsManager.Create_FacebookToken(AccessToken.CurrentAccessToken.UserId, nickname.text);
+            //awsManager.Create_FacebookToken(AccessToken.CurrentAccessToken.UserId, nickname.text);
         }
         else//error...
         {
             Debug.Log("FB Login error");
         }
     }
-    
+    #endregion
+
     public void AddAccount()//Account Panel
     {
 
-        string nickname_regex = "^[a-zA-Z가-힣0-9]{1}[a-zA-Z가-힣0-9]{1,7}$";
+        string nickname_regex = "^[a-zA-Z가-힣0-9]{1}[a-zA-Z가-힣0-9\\s]{0,6}[a-zA-Z가-힣0-9]{1}$";
         Regex regex = new Regex(nickname_regex);
 
-        if(regex.IsMatch(nickname.text))
+        for (int i = 0; i < awsManager.allUserInfo.Count; i++)
         {
-            awsManager.Create_UserInfo(isAuth, nickname.text, Callback_Create_UserInfo);      
+            if (nickname.text == awsManager.allUserInfo[i].nickname)
+            {
+                addAccountText.text = "이미 존재하는 닉네임입니다";
+                return;
+            }
+        }
+
+        if (regex.IsMatch(nickname.text))
+        {
+            
+            //jsonAdapter.CreateUserData(nickname.text, facebookUserId, CreateWebRequestCallback);
+            //jsonAdapter.CreateUserHistory(nickname.text, CreateWebRequestCallback);
+            jsonAdapter.AddAccount(nickname.text, facebookUserId, CreateWebRequestCallback);
+            //xmlManager.database.InitializeInfo(facebookUserId, nickname.text);
+            
         }
         else
         {
             addAccountText.text = "한글,영어,숫자 포함 최소 2자, 최대 8자입니다";
         }
     }
-    void Callback_Create_UserInfo(bool success)//Create_UserInfo Result..
-    {
-        if(success)
-        {
-            if(isAuth)
-            {
-                PlayerPrefs.SetString("Login", "facebook");
-                var perms = new List<string>() { "email" };
-                FB.LogInWithReadPermissions(perms, FacebookLoginCallback);
-                //create facebookuser 
-            }
-            else
-            {
-                PlayerPrefs.SetString("Login", "guest");
-                
-                //do nothing
-            }
 
-            xmlManager.itemDB.Initialize(isAuth, nickname.text);
-            xmlManager.SaveItems();
-
-            facebook_login_button.gameObject.SetActive(false);
-            guest_login_button.gameObject.SetActive(false);
-            accountPanel.SetActive(false);
-            play_button.interactable = true;
-        }
-        else
-        {
-            //DB Exception // 아마도 중복?
-        }
-    }
+   
+    
+    
 
     public void GameStart()
     {
@@ -251,5 +303,90 @@ public class LoadingScene : MonoBehaviour
 
         yield break;
         
+    }
+
+    /*
+    void LoadUserData()
+    {
+        string nickname = PlayerPrefs.GetString("nickname", "pingpengboong");
+
+        jsonAdapter.GetUserInfo(nickname, GetWebRequestCallback);
+        jsonAdapter.GetAllUserInfo(GetWebRequestCallback);
+        jsonAdapter.GetUserFriend(nickname, GetWebRequestCallback);
+        jsonAdapter.GetUserHistory(nickname, GetWebRequestCallback);
+        jsonAdapter.GetUserInventory(nickname, GetWebRequestCallback);
+        jsonAdapter.GetUserReward(nickname, GetWebRequestCallback);
+        jsonAdapter.GetUserStage(nickname, GetWebRequestCallback);
+
+        
+    }
+    */
+
+    void WebRequestCallback(bool success)
+    {
+        if (success)
+        {
+            if (jsonAdapter.EndLoading())
+            {
+                Debug.Log("success get all user data");
+                LoginWithUserState();//call back GetWebRequestCallback
+            }
+
+        }
+        else
+        {
+            Debug.LogError("fail create user");
+        }
+    }
+
+    void CreateWebRequestCallback(bool success)
+    {
+        if(success)
+        {
+            if(jsonAdapter.EndLoading())
+            {
+                PlayerPrefs.SetString("nickname", nickname.text);
+
+                if (isAuth)
+                    PlayerPrefs.SetString("Login", "facebook");
+                else
+                    PlayerPrefs.SetString("Login", "guest");
+
+
+                jsonAdapter.GetAllUserData(PlayerPrefs.GetString("nickname", "pingpengboong"), GetWebRequestCallback);
+                //LoadUserData();
+            }
+
+        }
+        else
+        {
+            Debug.LogError("fail create user");
+        }
+    }
+
+    void GetWebRequestCallback(bool success)
+    {
+        if (success)
+        {
+            if (jsonAdapter.EndLoading())
+            {
+                Debug.Log("get all user data");
+
+                accountPanel.SetActive(false);
+                facebook_login_button.gameObject.SetActive(false);
+                guest_login_button.gameObject.SetActive(false);
+
+                awsManager.Count_LogOut_Time();
+                awsManager.StartCoroutine(awsManager.StartTimer());
+                play_button.interactable = true;
+
+
+            }
+
+        }
+        else
+        {
+            Debug.LogError("fail load user");
+        }
     }
 }

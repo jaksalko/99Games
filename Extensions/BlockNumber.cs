@@ -19,6 +19,7 @@ static class BlockNumber
         upperCracker_0 = 15, upperCracker_1 = 16, upperCracker_2 = 17,
         upperBroken = 18,//upperCracker_3
 
+        //여기서부터 모양이 기본블럭과 다름
         character = 20,
 
         parfaitA = 21, parfaitB = 22, parfaitC = 23, parfaitD = 24,
@@ -32,7 +33,11 @@ static class BlockNumber
         upperParfaitA = 31, upperParfaitB = 32, upperParfaitC = 33, upperParfaitD = 34,
         upperObstacle = 39;
 
-        
+
+    public static int[] first_floor = new int[] { normal, cloudUp, cloudRight, cloudLeft, cloudDown, cracker_0, cracker_1, cracker_2 };
+    public static int[] second_floor = new int[] { upperNormal, upperCloudUp, upperCloudRight, upperCloudLeft, upperCloudDown, upperCracker_0, upperCracker_1, upperCracker_2, slopeUp,slopeRight,slopeDown,slopeLeft,parfaitA,parfaitB,parfaitC,parfaitD,character,obstacle };
+    public static int[] third_floor = new int[] { upperCharacter, upperObstacle, upperParfaitA, upperParfaitB, upperParfaitC, upperParfaitD };
+
 
     public static int[] firstlevel = new int[4] { normal, cracker_0, cracker_1, cracker_2 };
     public static int[] secondLevel = new int[4] { upperNormal, upperCracker_0, upperCracker_1, upperCracker_2 };
@@ -62,7 +67,11 @@ static class BlockNumber
         if(!onCloud)
         {
             throughBlockList.AddRange(secondLevel);
-            throughBlockList.Add(upperParfaitA + parfaitOrder);            
+            for (int i = 0; i <= parfaitOrder; i++)
+            {
+                throughBlockList.Add(upperParfaitA + i);
+            }
+            //throughBlockList.Add(upperParfaitA + parfaitOrder);            
         }
 
         switch (dir)
@@ -102,7 +111,11 @@ static class BlockNumber
         if(!onCloud)
         {
             throughBlockList.AddRange(firstlevel);
-            throughBlockList.Add(parfaitA + parfaitOrder);
+            for(int i = 0; i <= parfaitOrder; i++)
+            {
+                throughBlockList.Add(parfaitA + i);
+            }
+            
         }
         
         throughBlockList.Add(slopeUp + dir);
@@ -129,8 +142,14 @@ static class BlockNumber
         stopBlockList.AddRange(secondLevel);
         stopBlockList.AddRange(firstlevel);
 
-        stopBlockList.Add(parfaitA + parfaitOrder);//first floor parfait
-        stopBlockList.Add(upperParfaitA + parfaitOrder);//first floor parfait
+        for (int i = 0; i <= parfaitOrder; i++)
+        {
+            stopBlockList.Add(parfaitA + i);//first floor parfait
+            stopBlockList.Add(upperParfaitA + i);//first floor parfait
+        }
+
+
+            
 
         
 
@@ -147,12 +166,19 @@ static class BlockNumber
         if (onCloud)
         {
             stopBlockList.AddRange(secondLevel);
-            stopBlockList.Add(upperParfaitA + parfaitOrder);
+            for (int i = 0; i <= parfaitOrder; i++)
+            {
+                stopBlockList.Add(upperParfaitA + i);
+            }
+            //stopBlockList.Add(upperParfaitA + parfaitOrder);
         }
 
         stopBlockList.AddRange(firstlevel);//normal , cracked
-        stopBlockList.Add(parfaitA + parfaitOrder);//first floor parfait
-
+        //stopBlockList.Add(parfaitA + parfaitOrder);//first floor parfait
+        for (int i = 0; i <= parfaitOrder; i++)
+        {
+            stopBlockList.Add(parfaitA + i);
+        }
 
 
         stopBlockList.Add(character);
@@ -170,7 +196,11 @@ static class BlockNumber
         if (onCloud)
         {
             stopBlockList.AddRange(firstlevel);
-            stopBlockList.Add(parfaitA + parfaitOrder);
+            for (int i = 0; i <= parfaitOrder; i++)
+            {
+                stopBlockList.Add(parfaitA + i);
+            }
+            //stopBlockList.Add(parfaitA + parfaitOrder);
         }
         
         return stopBlockList;

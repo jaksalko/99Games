@@ -9,11 +9,15 @@ public class MainSceneUIScript : UIScript
 
 	public GameObject EditorPlayPopup;
 
+	public Button playButton;
+	public Button profileButton;
+	public Button editorLobbyButton;
+	public GameObject[] lowerButtons;
 
-	public GameObject[] islandList;
-	public RectTransform backgroundImage;
-	int maxLevel = IslandData.lastLevel;
-	XMLManager xmlManager = XMLManager.ins;
+
+	public RectTransform islandDesign;
+
+	
 	SoundManager soundManager = SoundManager.instance;
 	public GameObject tutorialManager;
 
@@ -23,32 +27,35 @@ public class MainSceneUIScript : UIScript
 
 	public GameObject settingPopup;
 
+	[Header("Island Text")]
 	public Text boong_text;
 	public Text heart_text;
 	public Text heartTime_text;
 
-	public RectTransform editorDesign;
-	public RectTransform islandDesign;
+	
 
 	bool isAction = false;
 	bool isEditor = false;
 	bool editorMake = false;
 
 	public ProfilePopup profilePopup;
+	public Gatcha gatcha;
+	public Store store;
 
-
+	public GameObject comingsoonPanel;
+	public GameObject snowEffect;
 	private void Start()
 	{
-		xmlManager = XMLManager.ins;
+		
 		soundManager = SoundManager.instance;
 		soundManager.ChangeBGM(0);
 
-		int highLevel = xmlManager.itemDB.user.current_stage;
+		int highLevel = awsManager.userInfo.stage_current;
 
 
 		int island_num = Island_Name(highLevel);
-		islandList[island_num].SetActive(true);
-		backgroundImage.localPosition += Vector3.right * (-1080) * island_num;
+		//islandList[island_num].SetActive(true);
+		islandDesign.localPosition += Vector3.right * (-1080) * island_num;
 
 
 
@@ -65,15 +72,30 @@ public class MainSceneUIScript : UIScript
 
 	private void Update()
 	{
-		boong_text.text = xmlManager.itemDB.user.boong.ToString();
-		heart_text.text = xmlManager.itemDB.user.heart + "/5";
+		boong_text.text = awsManager.userInfo.boong.ToString();
+		if(awsManager.userInfo.heart > 5)
+        {
+			
+			heart_text.text = "<color=#e34949>"+awsManager.userInfo.heart+ "</color>" + "/5";
+		}
+		else
+        {
+			heart_text.text = awsManager.userInfo.heart + "/5";
+		}
+		
+		
 		heartTime_text.text = IntToTimerString();
+
+		if (awsManager.userInfo.heart <= 0)
+			playButton.interactable = false;
+		else
+			playButton.interactable = true;
 	}
 
 	string IntToTimerString()
 	{
 		string time_string = "";
-		int heart_time = xmlManager.itemDB.user.heart_time;
+		int heart_time = awsManager.userInfo.heart_time;
 		int min = 0;
 		int sec = 0;
 		while (heart_time != 0)
@@ -94,24 +116,14 @@ public class MainSceneUIScript : UIScript
 	}
 
 
-	public void PressIslandBtn()
-	{
-		SceneManager.LoadScene("LevelScene");
-	}
-
-	public void PressPlayBtn()
-	{
-
-		GameManager.instance.nowLevel = GameManager.instance.userInfo.current_stage;
-		StartCoroutine(GameStart());
-
-
-	}
-
-	public void EditorPlayIslandButtonClicked()
+	
+	
+	public void EditorPlayIslandButtonClicked(bool make)
     {
+		editorMake = make;
 		StartCoroutine(EditorModeChange());
 	}
+	
 	public void EditorMakeIslandButtonClicked()
     {
 		SceneManager.LoadScene("MapEditor");
@@ -122,74 +134,90 @@ public class MainSceneUIScript : UIScript
 		
 		Vector3 targetPosition;
 
-		if(editorMake)
+		profileButton.gameObject.SetActive(!editorMake);
+		editorLobbyButton.gameObject.SetActive(editorMake);
+
+		if (editorMake)
         {
-			targetPosition = editorDesign.localPosition + (Vector3.right * 1080);
+			foreach(GameObject button in lowerButtons)
+            {
+				button.SetActive(false);
+            }
+			targetPosition  = Vector3.right * (-1080) * 6;
 		}
 		else
         {
-			targetPosition = editorDesign.localPosition - (Vector3.right * 1080);
+			foreach (GameObject button in lowerButtons)
+			{
+				button.SetActive(true);
+			}
+			targetPosition = Vector3.right * (-1080) * 5;
 		}
 
-		while(editorDesign.localPosition != targetPosition)
+		while(islandDesign.localPosition != targetPosition)
         {
 
-			editorDesign.localPosition = Vector3.Lerp(editorDesign.localPosition,targetPosition,Time.deltaTime * 10);
+			islandDesign.localPosition = Vector3.Lerp(islandDesign.localPosition,targetPosition,Time.deltaTime * 10);
 
-			if (Mathf.Abs(editorDesign.localPosition.x - targetPosition.x) <= 1)
-				editorDesign.localPosition = targetPosition;
+			if (Mathf.Abs(islandDesign.localPosition.x - targetPosition.x) <= 1)
+				islandDesign.localPosition = targetPosition;
 			yield return null;
 		}
 		Debug.Log("arrive");
-		editorMake = editorMake ? false : true;
+		
 		yield break;
 	}
 	public void ChangeGameContentButtonClicked()//Island <-> Editor 
 	{
 		if(!isAction)
+        {
+			isEditor = !isEditor;
 			StartCoroutine(ChangeGameContentAction());
+		}
+			
 
 	}
 	IEnumerator ChangeGameContentAction()
     {
 		isAction = true;
 
-		float time = 0;
-		Vector3 editor_targetPosition;
-		Vector3 island_targetPosition;
+		playButton.gameObject.SetActive(!isEditor);//에디터 모드 일 때 안보임
+		profileButton.gameObject.SetActive(true);//에디터 모드 , 일반 모드 항상 보임
+		editorLobbyButton.gameObject.SetActive(false);//항상 안보임
+		foreach (GameObject button in lowerButtons)
+		{
+			button.SetActive(true);
+		}
+
+		Vector3 targetPosition;
+		
 
 		if(isEditor)
 		{
-			editor_targetPosition = new Vector3(0, 1920, 0);
-			island_targetPosition = new Vector3(0, 0, 0);
+			targetPosition = Vector3.right * (-1080) * 5;
+			snowEffect.SetActive(false);
+
 		}
 		else
         {
-			editor_targetPosition = new Vector3(0, 0, 0);
-			island_targetPosition = new Vector3(0, -1920, 0);
+			snowEffect.SetActive(true);
+			editorMake = false;
+			targetPosition = Vector3.right * (-1080) * Island_Name(awsManager.userInfo.stage_current);
 		}
-		
-		while(editor_targetPosition != editorDesign.localPosition)
-        {
-			Debug.Log(editor_targetPosition);
-			time += Time.deltaTime;
-			editorDesign.localPosition = Vector3.Lerp(editorDesign.localPosition , editor_targetPosition, Time.deltaTime * 10);
-			islandDesign.localPosition = Vector3.Lerp(islandDesign.localPosition, island_targetPosition, Time.deltaTime * 10);
 
-			if (Mathf.Abs(editorDesign.localPosition.y - editor_targetPosition.y) <= 1)
-				editorDesign.localPosition = editor_targetPosition;
+		islandDesign.localPosition = targetPosition;
+		/*
+		while (islandDesign.localPosition != targetPosition)
+		{
+
+			islandDesign.localPosition = Vector3.Lerp(islandDesign.localPosition, targetPosition, Time.deltaTime * 10);
+
+			if (Mathf.Abs(islandDesign.localPosition.x - targetPosition.x) <= 1)
+				islandDesign.localPosition = targetPosition;
 			yield return null;
-        }
-
-		if (isEditor)
-		{
-			isEditor = false;
 		}
-		else
-		{
-			isEditor = true;
 
-		}
+		*/
 
 		isAction = false;
 		yield break;
@@ -197,15 +225,7 @@ public class MainSceneUIScript : UIScript
     }
 
 
-	public void PressEglooBtn()
-	{
-		SceneManager.LoadScene("MyInfoScene");
-	}
-
-	public void PressStoreBtn()
-	{
-		SceneManager.LoadScene("StoreScene");
-	}
+	
 
    
 
@@ -236,6 +256,86 @@ public class MainSceneUIScript : UIScript
     }
 	public void ProfileButtonClicked()
     {
-		profilePopup.gameObject.SetActive(true);
+		profilePopup.Activate();
     }
+	public void MyEglooButtonClicked()
+	{
+		StartCoroutine(comingsoonPanelActivate());
+	}
+
+	public void StoreButtonClicked()
+	{
+		StartCoroutine(comingsoonPanelActivate());
+		/*
+		foreach (GameObject button in lowerButtons)
+		{
+			button.SetActive(true);
+		}
+
+		gatcha.gameObject.SetActive(false);
+		store.gameObject.SetActive(true);
+		*/
+	}
+
+	public void GatchaButtonClicked()
+    {
+		StartCoroutine(comingsoonPanelActivate());
+		/*
+		foreach (GameObject button in lowerButtons)
+		{
+			button.SetActive(true);
+		}
+
+		store.gameObject.SetActive(false);
+		gatcha.gameObject.SetActive(true);
+		*/
+	}
+	IEnumerator comingsoonPanelActivate()
+    {
+		comingsoonPanel.SetActive(true);
+		float t = 0;
+		while(t < 2)
+        {
+			t += Time.deltaTime;
+			yield return null;
+        }
+
+		comingsoonPanel.SetActive(false);
+
+		yield break;
+    }
+	public void PressIslandBtn()
+	{
+		SceneManager.LoadScene("LevelScene");
+	}
+
+	public void PressPlayBtn()
+	{
+		awsManager.userInfo.heart--;
+		awsManager.userHistory.heart_use++;
+		jsonAdapter.UpdateData(awsManager.userInfo, "userInfo", PlayButtonCallback);
+		jsonAdapter.UpdateData(awsManager.userHistory, "userHistory", PlayButtonCallback);
+	}
+
+	void PlayButtonCallback(bool success)
+	{
+		if (success)
+		{
+			if (jsonAdapter.EndLoading())
+			{
+				GameManager.instance.nowLevel = awsManager.userInfo.stage_current;
+				if(PlayerPrefs.GetInt("tutorial") == 0)
+                {
+					GameManager.instance.nowLevel = 0;
+
+				}
+				StartCoroutine(GameStart());
+			}
+		}
+		else
+		{
+			awsManager.userInfo.heart++;
+			awsManager.userHistory.heart_use--;
+		}
+	}
 }

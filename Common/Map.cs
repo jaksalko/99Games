@@ -29,7 +29,7 @@ public class Map : MonoBehaviour, IMap
     Block[,] blocks;
 
     public List<Vector2> snowList;
-    public List<KeyValuePair<Vector2, int>> crackerList;
+    public List<Block> stepped_blockList;
 
     
     private void Awake()
@@ -41,7 +41,7 @@ public class Map : MonoBehaviour, IMap
         check = new bool[mapsizeH, mapsizeW];//마찬가지
 
         snowList = new List<Vector2>();
-        crackerList = new List<KeyValuePair<Vector2, int>>();
+        stepped_blockList = new List<Block>();
         
     }
 
@@ -61,73 +61,8 @@ public class Map : MonoBehaviour, IMap
         this.datas = datas;
         this.styles = styles;
         if(map_title == null)
-            map_title = GameManager.instance.user_aws.nickname + " " + DateTime.Now.ToString("yyyyMMddHHmmss");
+            map_title = PlayerPrefs.GetString("nickname","pingpengboong") + " " + DateTime.Now.ToString("yyyyMMddHHmmss");
     }
-    /*
-    public void Initialize(JsonData map)
-    {
-        mapsizeH = map.height;
-        mapsizeW = map.width;
-
-        parfait = (map.parfait == 1) ? true : false;
-
-        startPositionA = map.StringToPosition(map.posA);
-        startPositionB = map.StringToPosition(map.posB);
-
-        int[,] datas = new int[mapsizeH, mapsizeW];
-        int index = 0;
-        for (int i = 0; i < mapsizeH; i++)
-        {
-            for (int j = 0; j < mapsizeW; j++)
-            {
-
-                datas[i, j] = map.CharToIndex(map.value[index]);
-
-                index++;
-            }
-        }
-
-        this.map = datas;
-        MapToLine();
-    }
-    */
-
-
-    /*
-    public void LineToMap()
-    {
-        map = new int[mapsizeH, mapsizeW];
-        for (int i = 0; i < mapsizeH; i++)
-        {
-            for (int j = 0; j < mapsizeW; j++)
-            {
-                map[i, j] = lines[i].line[j];
-            }
-        }
-
-    }
-    */
-
-    /*
-    public void MapToLine(int[,] datas)
-    {
-        int dataCount = mapsizeH * mapsizeW;
-        for (int i = 0; i < mapsizeH; i++)
-        {
-            Line newLine = new Line();
-
-            lines.Add(newLine);
-            for (int j = 0; j < mapsizeW; j++)
-            {
-                lines[i].line.Add(datas[i, j]);
-            }
-        }
-    }
-    */
-
-
-    
-
 
     bool isEndGame()
     {
@@ -204,9 +139,9 @@ public class Map : MonoBehaviour, IMap
                 if (next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
                 {
                     //change block data parfait to normal
-                    blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.normal; //pos 위치가 아닌 한칸 이동한 위치ㄹ
-					//parfaitorder++;
-					GameController.ParfaitOrder++;
+                    //blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.normal; //pos 위치가 아닌 한칸 이동한 위치
+                    if ((next % 10 - 1) == GameController.ParfaitOrder)
+                        GameController.ParfaitOrder++;
 
 
                     return true;
@@ -262,9 +197,10 @@ public class Map : MonoBehaviour, IMap
             case 2:
                 if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)
                 {
-                    blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.upperNormal;
-					GameController.ParfaitOrder++;
-
+                    //blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.upperNormal;
+                    if((next%10-1) == GameController.ParfaitOrder)
+					    GameController.ParfaitOrder++;
+                    Debug.Log("up");
                     return true;
                 }
                 else if (next >= BlockNumber.cloudUp && next <= BlockNumber.cloudLeft)
@@ -361,6 +297,8 @@ public class Map : MonoBehaviour, IMap
     
     public void GetDestination(Player player, Vector3 pos)
     {
+        
+
         Debug.Log("player name : " + player.name + " position : " + pos + " player dir : " + player.getDirection);
         int direction = player.getDirection;
        
@@ -368,8 +306,18 @@ public class Map : MonoBehaviour, IMap
         int posX = (int)pos.x;
         int posZ = (int)pos.z;
 
-        //blocks[posZ, posX].data = player.temp;//이거 문제임 한번만 불려야 하는데... player.cs 151 line
-//        Debug.Log((posZ + step[direction, 0]) + "," + (posX + step[direction, 1]) + " data : " + GetBlockdata(x: posX + step[direction, 1], z: posZ + step[direction, 0]));
+        if (pos == player.transform.position)//시작부분
+        {
+            Debug.Log("frist time call by getDestination");
+            if (blocks[posZ,posX].type == Block.Type.Cracker)
+            {
+                Debug.Log("frist time call by getDestination : add cracker block");
+                stepped_blockList.Add(blocks[posZ, posX]);
+            }
+        }
+
+
+
         int next = GetBlockData(x: posX + step[direction, 1], z: posZ+ step[direction, 0]);
         int nextnext = GetBlockData(x: posX + step[direction, 1] * 2, z: posZ + step[direction, 0] * 2);
 
@@ -380,6 +328,7 @@ public class Map : MonoBehaviour, IMap
 
             posX += step[direction, 1];
             posZ += step[direction, 0];
+            
             UpdateCheckTrue(width: posX, height: posZ);
 
             pos = new Vector3(posX, pos.y, posZ);
@@ -419,7 +368,8 @@ public class Map : MonoBehaviour, IMap
                     {
                         player.actionnum = 3;//crash : 3
                         blocks[posZ, posX].data = BlockNumber.normal;
-						GameController.ParfaitOrder++;
+                        if ((next % 10 - 1) == GameController.ParfaitOrder)
+                            GameController.ParfaitOrder++;
                     }
                     else
                     {
@@ -446,13 +396,15 @@ public class Map : MonoBehaviour, IMap
                         pos.y -= 1;
                         player.actionnum = 5;//drop : 5
                         blocks[posZ, posX].data = BlockNumber.normal;
-						GameController.ParfaitOrder++;
+                        if ((next % 10 - 1) == GameController.ParfaitOrder)
+                            GameController.ParfaitOrder++;
                     }
                     else if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)//onCloud(2층)에서 2층 파레페 먹고 멈
                     {
                         player.actionnum = 3;// crash : 3
                         blocks[posZ, posX].data = BlockNumber.upperNormal;
-						GameController.ParfaitOrder++;
+                        if ((next % 10 - 1) == GameController.ParfaitOrder)
+                            GameController.ParfaitOrder++;
                     }
                     else
                     {
@@ -472,7 +424,8 @@ public class Map : MonoBehaviour, IMap
                         player.actionnum = 5;//drop : 5
                         pos.y -= 2;
                         blocks[posZ, posX].data = BlockNumber.normal;
-						GameController.ParfaitOrder++;
+                        if ((next % 10 - 1) == GameController.ParfaitOrder)
+                            GameController.ParfaitOrder++;
                     }
                     else if(next >= BlockNumber.upperNormal && next <= BlockNumber.upperCracker_2)
                     {
@@ -484,7 +437,8 @@ public class Map : MonoBehaviour, IMap
                         player.actionnum = 5;//drop : 5
                         pos.y -= 1;
                         blocks[posZ, posX].data = BlockNumber.upperNormal;
-						GameController.ParfaitOrder++;
+                        if ((next % 10 - 1) == GameController.ParfaitOrder)
+                            GameController.ParfaitOrder++;
                     }
                     else
                     {
@@ -555,16 +509,18 @@ public class Map : MonoBehaviour, IMap
 
 
 
-        GameController.instance.moveCommand.SetLaterData(snowList, crackerList);
+        GameController.instance.moveCommand.SetLaterData(snowList, stepped_blockList);
 
         snowList.Clear();
-        crackerList.Clear();
+        stepped_blockList.Clear();
 
         
         
     }
     public void UpdateCheckTrue(int width, int height)
     {
+        stepped_blockList.Add(blocks[height, width]);
+
         if (!check[height, width])
         {
             snowList.Add(new Vector2(height, width));
@@ -596,62 +552,15 @@ public class Map : MonoBehaviour, IMap
         blocks[z, x] = block;
     }
 
-	public KeyValuePair<Vector2, int>[] FindParfaitBlocks()
-	{
-		KeyValuePair<Vector2, int>[] parfaitPos = new KeyValuePair<Vector2, int>[4];
+    public Block GetBlock(int width, int height)
+    {
+        return blocks[height, width];
+    }
 
-		for (int i = 0; i < mapsizeH; i++)
-		{
-			for (int j = 0; j < mapsizeW; j++)
-			{
-				if (blocks[i, j].data == BlockNumber.parfaitA || blocks[i, j].data == BlockNumber.upperParfaitA)
-				{
-					parfaitPos[0] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
-				}
-				else if (blocks[i, j].data == BlockNumber.parfaitB || blocks[i, j].data == BlockNumber.upperParfaitB)
-				{
-					parfaitPos[1] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
-				}
-				else if (blocks[i, j].data == BlockNumber.parfaitC || blocks[i, j].data == BlockNumber.upperParfaitC)
-				{
-					parfaitPos[2] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
-				}
-				else if (blocks[i, j].data == BlockNumber.parfaitD || blocks[i, j].data == BlockNumber.upperParfaitD)
-				{
-					parfaitPos[3] = new KeyValuePair<Vector2, int>(new Vector2(i, j), blocks[i, j].data);
-				}
-			}
-		}
+	
 
-		return parfaitPos;
-	}
-
-	public List<KeyValuePair<Vector2, Vector2>> FindCrackerBlocks()
-	{
-		List<KeyValuePair<Vector2, Vector2>> crackerBlocks = new List<KeyValuePair<Vector2, Vector2>>();
-		int index = 0;
-		for (int i = 0; i < mapsizeH; i++)
-		{
-			for (int j = 0; j < mapsizeW; j++)
-			{
-				if ((blocks[i, j].data >= BlockNumber.cracker_0 && blocks[i, j].data <= BlockNumber.cracker_2)
-                    || (blocks[i, j].data >= BlockNumber.upperCracker_0 && blocks[i, j].data <= BlockNumber.upperCracker_2))
-				{
-					Vector2 blockPos = new Vector2(i, j);
-					Vector2 blockdata = new Vector2(blocks[i, j].GetComponent<CrackedBlock>().count, blocks[i, j].data);
-					crackerBlocks.Insert(index, new KeyValuePair<Vector2, Vector2>(blockPos, blockdata));
-					index++;
-				}
-			}
-		}
-		return crackerBlocks;
-	}
-
-	public void SetCrackerCount(int x, int z, int count)
-	{
-		blocks[z, x].GetComponent<CrackedBlock>().count = count;
-		blocks[z, x].GetComponent<CrackedBlock>().SetMaterial(count);
-	}
+	
+	
 }
 
 

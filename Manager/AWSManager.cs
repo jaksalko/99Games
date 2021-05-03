@@ -8,6 +8,7 @@ using Amazon.CognitoIdentity;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 
+/*
 [DynamoDBTable("PingPengBoong")]
 public class PingPengBoong
 {
@@ -25,27 +26,7 @@ public class Friend
     [DynamoDBProperty] public List<string> receive { get; set; }
 }
 
-[DynamoDBTable("EditorMap")]
-public class EditorMap
-{
-    [DynamoDBHashKey] public string map_id { get; set; }
-    [DynamoDBProperty] public string maker { get; set; }
-    [DynamoDBProperty] public string title { get; set; }
-    [DynamoDBProperty] public string make_time { get; set; }
-    [DynamoDBProperty] public int play_count { get; set; }
-    [DynamoDBProperty] public int like { get; set; }
 
-    [DynamoDBProperty] public int height { get; set; }
-    [DynamoDBProperty] public int width { get; set; }
-    [DynamoDBProperty] public string datas { get; set; } //List 형태 //(가로 * 세로) 개
-    [DynamoDBProperty] public string styles { get; set; } //List 형태 // 3개가 한묶음 (가로 * 세로 * 3) 개
-    
-    [DynamoDBProperty] public bool isParfait { get; set; }
-
-    [DynamoDBProperty] public List<int> star_limit { get; set; }
-    [DynamoDBProperty] public int step { get; set; }
-    [DynamoDBProperty] public int level { get; set; }
-}
 
 [DynamoDBTable("UserInfo")]
 public class User
@@ -54,7 +35,7 @@ public class User
     [DynamoDBProperty]public int boong { get; set; } // 유저의 붕 갯수
     [DynamoDBProperty]public int heart {get; set;} // 유저의 하트 갯수
     [DynamoDBProperty]public int heart_time {get; set;} // 하트 충전 타이머
-    [DynamoDBProperty]public int current_stage {get; set;} // 유저가 깨야하는 스테이지
+    [DynamoDBProperty]public int stage_current {get; set;} // 유저가 깨야하는 스테이지
     [DynamoDBProperty]public string log_out {get; set;} //로그 아웃 시간 yyyy/MM/dd HH:mm
     [DynamoDBProperty]public string star_list { get; set; } // 별 갯수 = List
     [DynamoDBProperty]public string move_list { get; set; } // 움직인 횟수 = List
@@ -103,11 +84,12 @@ public class FacebookUser
     [DynamoDBHashKey] public string tokenId { get; set; } //facebook token id
     [DynamoDBProperty] public string nickname { get; set; } //facebook user nickname
 }
-
+*/
 public class AWSManager : MonoBehaviour
 {
+    bool paused = false;
     public static AWSManager instance = null;
-
+    JsonAdapter jsonAdapter;
 
     private CognitoAWSCredentials _credentials;
     private CognitoAWSCredentials Credentials
@@ -129,12 +111,23 @@ public class AWSManager : MonoBehaviour
 
     public delegate void BooleanCallback(bool callback);
 
-   
-    public User user;
-    public PingPengBoong pingPengBoong;
-    public Friend friend;
-    public GameObject loadingPopup;
 
+    public List<UserInfo> allUserInfo;
+
+    public UserInfo userInfo;
+    public UserHistory userHistory;
+
+
+    public List<UserReward> userReward;
+    public List<UserStage> userStage;
+    public List<UserInventory> userInventory;
+    public List<UserFriend> userFriend;
+    public List<CustomMapItem> editorMap;
+    public List<Mailbox> mailbox;
+
+
+    public Transform customMapList;
+   
 
     void Awake()
     {
@@ -177,7 +170,7 @@ public class AWSManager : MonoBehaviour
 
     private void Start()
     {
-        
+        jsonAdapter = JsonAdapter.instance;
     }
 
     public void AddLogin_To_Credentials(string token)
@@ -185,83 +178,125 @@ public class AWSManager : MonoBehaviour
         Credentials.AddLogin ("graph.facebook.com", token);
     }
 
-    public void LoadAllUsers()
+    public void Count_LogOut_Time()
     {
-        dbContext.LoadAsync<PingPengBoong>(0,(AmazonDynamoDBResult <PingPengBoong> result) =>{
-            if (result.Exception != null)
-            {
-                Debug.LogException(result.Exception);
-               
-            }
-            else
-            {
-                pingPengBoong = result.Result;
-            }
-        });
+        Debug.Log(userInfo.log_out);
+        DateTime log_out = DateTime.ParseExact(userInfo.log_out, "yyyy-MM-dd HH:mm:ss", null);
+        long sec = (long)(DateTime.Now - log_out).TotalSeconds;
+        Debug.Log("sec : " + sec);
 
 
-    }
-
-    public void Load_FriendList()
-    {
-        dbContext.LoadAsync<Friend>(0, (AmazonDynamoDBResult<Friend> result) => {
-            if (result.Exception != null)
-            {
-                Debug.LogException(result.Exception);
-
-            }
-            else
-            {
-                friend = result.Result;
-            }
-        });
-    }
-
-    public void Load_EditorMap()
-    {
-        dbContext.LoadAsync<Friend>(0, (AmazonDynamoDBResult<Friend> result) => {
-            if (result.Exception != null)
-            {
-                Debug.LogException(result.Exception);
-
-            }
-            else
-            {
-                friend = result.Result;
-            }
-        });
-    }
-   
-    public void Load_UserInfo(LoadUserCallback callback) //DB에서 캐릭터 정보 받기
-    {
-        Debug.Log(XMLManager.ins.itemDB.user.nickname);
-        dbContext.LoadAsync<User>(XMLManager.ins.itemDB.user.nickname, (AmazonDynamoDBResult<User> result) =>
+        if (userInfo.heart < 5)
         {
-            // id가 abcd인 캐릭터 정보를 DB에서 받아옴
-            if (result.Exception != null)
+            for (int i = 0; i < sec; i++)
             {
-                Debug.LogException(result.Exception);
-                callback(false);
+
+                userInfo.heart_time--;
+                if (userInfo.heart_time <= 0)
+                {
+                    userInfo.heart++;
+                    userInfo.heart_time = 600;
+
+                    if (userInfo.heart == 5)
+                    {
+                        break;
+                    }
+                    jsonAdapter.UpdateData(userInfo, "userInfo", SaveDataCallback);
+                    jsonAdapter.UpdateData(userHistory, "userHistory", SaveDataCallback);
+                }
             }
-            if(result.Result == null)
+        }
+
+        
+    }
+
+    public IEnumerator StartTimer()//하트 타이머
+    {
+        float wait_second = 1f;
+        int play_sec = 0;
+        while (true)
+        {
+            play_sec++;
+            if (play_sec == 60)
             {
-                Debug.Log("not exist!");
-                callback(false);
+                play_sec = 0;
+                userHistory.play_time++;
+            }
+
+            if (userInfo.heart < 5)
+            {
+                userInfo.heart_time -= 1;
+                if (userInfo.heart_time == 0)
+                {
+                    userInfo.heart++;
+                    userInfo.heart_time = 600;
+                    jsonAdapter.UpdateData(userInfo, "userInfo", SaveDataCallback);
+                    jsonAdapter.UpdateData(userHistory, "userHistory", SaveDataCallback);
+                    //XMLManager.ins.SaveItems();
+
+                }
             }
             else
             {
-                user = result.Result;
-                
-                Debug.Log("user data :" + user.nickname); //찾은 캐릭터 정보 중 아이템 정보 출력
-                callback(true);
+                userInfo.heart_time = 600;
             }
-            
-        });
+            //Debug.Log("heart time " + user.heart_time);
 
 
-       
-
+            yield return new WaitForSeconds(wait_second);
+        }
     }
+
+    void OnApplicationQuit()
+    {
+        SaveData();
+        PlayerPrefs.Save();
+    }
+
+    void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            paused = true;
+            SaveData();
+            PlayerPrefs.Save();
+        }
+        else
+        {
+            if (paused)//앱 시작 시 불리는 것을 방지하기 위함
+            {
+                Count_LogOut_Time();
+                paused = false;
+            }
+        }
+    }
+
+    void SaveData()
+    {
+        userInfo.log_out = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        jsonAdapter.UpdateData(userInfo, "userInfo",SaveDataCallback);
+        jsonAdapter.UpdateData(userHistory, "userHistory",SaveDataCallback);
+    }
+
+    void SaveDataCallback(bool success)
+    {
+        if(success)
+        {
+            if(jsonAdapter.EndLoading())
+            {
+                Debug.Log("success update");
+            }
+            else
+            {
+                Debug.LogError("loading...");
+            }
+        }
+        else
+        {
+            Debug.LogError("fail save data");
+        }
+    }
+    /*
     public void CreateEditorMap(Map map , int moveCount,int dif , BooleanCallback callback)
     {
         List<int> dynamoDB_datas = new List<int>();
@@ -288,21 +323,7 @@ public class AWSManager : MonoBehaviour
 
         EditorMap editorMap = new EditorMap
         {
-            /*
-            [DynamoDBHashKey] public string map_id { get; set; }
-            [DynamoDBProperty] public string maker { get; set; }
-            [DynamoDBProperty] public string title { get; set; }
-            [DynamoDBProperty] public string make_time { get; set; }
-            [DynamoDBProperty] public int play_count { get; set; }
-            [DynamoDBProperty] public int like { get; set; }
-
-            [DynamoDBProperty] public int height { get; set; }
-            [DynamoDBProperty] public int width { get; set; }
-            [DynamoDBProperty] public List<List<int>> datas { get; set; }
-            [DynamoDBProperty] public List<List<List<int>>> styles { get; set; }
-
-            [DynamoDBProperty] public bool isParfait { get; set; }
-            */
+            
 
         
 
@@ -352,147 +373,11 @@ public class AWSManager : MonoBehaviour
 
 
     }
-
-    public void Create_FacebookToken(string id , string nick)
-    {
-        FacebookUser facebookUser = new FacebookUser
-        {
-            tokenId = id,
-            nickname = nick
-        };
-
-        dbContext.SaveAsync(facebookUser, (result) => {
-            if (result.Exception == null)
-            {
-                //this = user;
-               
-                Debug.Log("Success saved user");
-                
-            }
-            else
-            {
-                Debug.Log("DB Save Exception : " + result.Exception);
-                
-            }
+    */
 
 
-        });
-    }
-    public void Create_UserInfo(bool isAuth, string nick,CreateUserCallback create_success)//call by LoadingScene(AddAccount)
-    {
 
 
-        User user = new User
-        {
-
-            nickname = nick,
-            boong = 0,
-            heart = 5,
-            current_stage = 0,
-            log_out = DateTime.Now.ToString("yyyyMMddHHmmss"),
-            heart_time = 600, // 10분
-            star_list = "0",
-            move_list = "0",
-            reward_list = new List<int>(),
-
-            ping_skin_num = 0,//캐릭터 1 스킨착용 기본 검은색
-            peng_skin_num = 1,//캐릭터 2 스킨착용 기본 분홍 
-
-            profile_skin_num = 0,//대표이미지 번호
-            profile_introduction ="",//자기소개
-            profile_style_num =0,//칭호 번호 //0은 없음.
-
-            mySkinList = new List<int> {0,1},// 보유 스킨 번호 리스트 --> 보유 대표이미지 번호 리스트
-            myStyleList = new List<int> { 0},// 보유 칭호 번호 리스트 --> 0은 없D
-
-            drop_count =0,
-            crash_count = 0,
-            carry_count =0,
-            reset_count = 0,
-            move_count = 0,
-            snow_count = 0,
-            parfait_done_count = 0,
-            crack_count = 0,
-            cloud_count = 0,
-
-            editor_make_count = 0,
-            editor_clear_count = 0,
-
-            boong_count = 0,
-            heart_count = 0,
-
-            skin_count = 0,
-
-            playTime = 0,
-            clear_count = 0,
-            fail_count = 0,
-
-            facebook = isAuth
-
-        };
-
-        dbContext.LoadAsync(nick, (AmazonDynamoDBResult<User> result) =>
-        {
-            // id가 abcd인 캐릭터 정보를 DB에서 받아옴
-            if (result.Exception != null)
-            {
-                Debug.LogException(result.Exception);
-                create_success(false);
-            }
-            if (result.Result == null)
-            {
-                Debug.Log("new user!");
-                dbContext.SaveAsync(user, (save_result) => {
 
 
-                    if (save_result.Exception == null)
-                    {
-                        this.user = user;
-                        
-                        Debug.Log("Success saved user");
-                        create_success(true);
-                    }
-                    else
-                    {
-                        Debug.Log("DB Save Exception : " + save_result.Exception);
-                        create_success(false);
-                    }
-
-
-                });
-            }
-            else
-            {
-               
-                Debug.Log("user data :" + user.nickname + ", already exist :("); //찾은 캐릭터 정보 중 아이템 정보 출력
-                create_success(false);
-            }
-
-        });
-       
-    }
-    
-
-    public void Update_UserInfo()
-    {
-        user.log_out = DateTime.Now.ToString("yyyyMMddddHHmmss");
-        dbContext.SaveAsync(user,(res)=>
-            {
-                if(res.Exception == null)
-                {
-                    Debug.Log("success update");
-                    
-                }
-                else
-                {
-                    Debug.Log(res.Exception);
-                }
-                     
-        });
-    }
-    
-    public void ConnectWithAWS(bool connect)
-    {
-        loadingPopup.SetActive(!connect);
-    }
 }

@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
-
+using UniRx;
+using UniRx.Triggers;
 
 
 
@@ -13,6 +14,7 @@ public class UiController : UIScript
     public GameObject inGame;
 
     public GameObject pausePopup;
+    public GameObject settingPopup;
     public TextMeshProUGUI pauseStageText;
     public Button pausePopup_retryButton;
 
@@ -38,23 +40,40 @@ public class UiController : UIScript
     public Button player1;
     public Button player2;
 
-    public Sprite player1_off_image;
-    public Sprite player2_off_image;
-    public Sprite player1_on_image;
-    public Sprite player2_on_image;
+
+    public Button revertButton;
 
 
     public StarSlider starSlider;
     List<int> star_limit = new List<int>();
-    private void Awake()
+    
+
+    private void Start()
     {
         devtext.text = "platform : " + Application.platform + "\n" + "level : " + PlayerPrefs.GetInt("level", 0);
-       
+
+        player1.GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Skin/" + awsManager.userInfo.skin_a);
+        player2.GetComponent<Image>().sprite = Resources.Load<Sprite>("Icon/Skin/" + awsManager.userInfo.skin_b);
+
+        SpriteState spriteState = new SpriteState();
+
+        spriteState = player1.spriteState;
+        spriteState.disabledSprite = Resources.Load<Sprite>("Icon/Skin/" + awsManager.userInfo.skin_a + "_on");
+        player1.spriteState = spriteState;
+
+        spriteState = player2.spriteState;
+        spriteState.disabledSprite = Resources.Load<Sprite>("Icon/Skin/" + awsManager.userInfo.skin_b + "_on");
+        player2.spriteState = spriteState;
+
+        player1.interactable = false;
+        player2.interactable = true;
+
+
     }
 
     public void GameEnd(bool isSuccess, int star,int remain_snow, int moveCount, bool custom , bool editor)
     {
-        inGame.SetActive(false);
+        //inGame.SetActive(false);
         //SetMoveCountText(moveCount);
 
         //infinite --> 종료 팝업 선택 버튼 : 다음 맵 / 로비로?
@@ -62,7 +81,7 @@ public class UiController : UIScript
         //Default --> 종료 팝업 선택 버튼 : 다음 스테이지 / 로비로
         if (custom)
         {
-            customSceneResultPopup.ShowResultPopup(moveCount);
+            customSceneResultPopup.ShowResultPopup(isSuccess, remain_snow, moveCount, star_count: star);
         }
         else if(editor)
         {
@@ -114,7 +133,7 @@ public class UiController : UIScript
         GameController.instance.SetPlaying(false);
         pauseStageText.text = StageText(gameManager.nowLevel);
 
-        if(gameManager.userInfo.heart == 0 )
+        if(AWSManager.instance.userInfo.heart == 0 )
         {
             pausePopup_retryButton.interactable = false;
         }
@@ -122,13 +141,35 @@ public class UiController : UIScript
         pausePopup.SetActive(true);
     }
 
+    public void SettingButtonClicked()
+    {
+        GameController.instance.SetPlaying(false);
+        settingPopup.SetActive(true);
+    }
+
     public void Reset()
     {
 
-        gameManager.userInfo.heart--;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        AWSManager.instance.userInfo.heart--;
+        AWSManager.instance.userHistory.heart_use++;
+        JsonAdapter.instance.UpdateData(AWSManager.instance.userInfo,"userInfo", ResetCallback);
+        JsonAdapter.instance.UpdateData(AWSManager.instance.userHistory,"userHistory", ResetCallback);
+        
     }
+    void ResetCallback(bool success)
+    {
+        if(success)
+        {
+            if(JsonAdapter.instance.EndLoading())
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
+        }
+        else
+        {
 
+        }
+    }
     public void GoLobby()
     {
         SceneManager.LoadScene("MainScene");
@@ -144,13 +185,24 @@ public class UiController : UIScript
 
     public void MiniMapButton()
     {
-        mini = GameController.instance.cameraController.MiniMapView(mini);
-        GameController.instance.SetPlaying(!mini);
+        Player now = GameController.instance.nowPlayer;
+
+        if (!now.Moving() && !now.other.Moving())
+        {
+            mini = GameController.instance.cameraController.MiniMapView(mini);
+            GameController.instance.SetPlaying(!mini);
+        }
+            
     }
 
     public void ReturnButton()
     {
-		GameController.instance.moveCommand.Undo();
+        Player now = GameController.instance.nowPlayer;
+
+        if (!now.Moving() && !now.other.Moving())
+        {
+            GameController.instance.moveCommand.Undo();
+        }
     }
 
 
@@ -170,7 +222,7 @@ public class UiController : UIScript
             player = instance.player2;
         }
 
-        if(!now.Moving())
+        if(!now.Moving() && !now.other.Moving())
         {
             now.isActive = false;
             instance.nowPlayer = player;
@@ -179,41 +231,22 @@ public class UiController : UIScript
             if(player == GameController.instance.player1)
             {
                 player1.interactable = false;
-                player1.image.sprite = player1_on_image;
+                
 
                 player2.interactable = true;
-                player2.image.sprite = player2_off_image;
+                
             }
             else
             {
                 player1.interactable = true;
-                player1.image.sprite = player1_off_image;
+                
 
                 player2.interactable = false;
-                player2.image.sprite = player2_on_image;
             }
             
         }
 
-		if (!now.Moving())
-		{
-//			Debug.Log("change Character");
-			
-
-			if (!instance.nowPlayer.GetComponent<AudioSource>().isPlaying)
-			{
-				instance.nowPlayer.GetComponent<AudioSource>().loop = false;
-				instance.nowPlayer.GetComponent<AudioSource>().clip = instance.nowPlayer.GetComponent<Player>().departureSound;
-
-				instance.nowPlayer.GetComponent<AudioSource>().Play();
-			}
-
-			
-		}
-		else
-		{
-			Debug.Log("Can't change!");
-		}
+		
         
     }
     public void MasterFocus(Player master)

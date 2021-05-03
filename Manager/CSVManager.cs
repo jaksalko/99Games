@@ -11,10 +11,20 @@ public class CSVManager : MonoBehaviour
     List<Dictionary<string, object>> rewards_csv;
 
     public List<Island> islands = new List<Island>();
-    public List<Rewards> rewards = new List<Rewards>(); 
+    public List<Rewards> rewards = new List<Rewards>();
+
+    public List<SkinItem> skinItems = new List<SkinItem>();
+    public SkinItem skinItemPrefab;
+
+    public List<BlockPiece> blockPieces = new List<BlockPiece>();
+    public BlockPiece blockPiecePrefab;
+
+    public List<Style> styleList = new List<Style>();
 
     public Map mapPrefab;
     public Reward rewardPrefab;
+
+
     // Start is called before the first frame update
 
     [Serializable]
@@ -33,6 +43,7 @@ public class CSVManager : MonoBehaviour
 
     void Awake()
     {
+        
         if (instance == null)
         {
             Debug.Log("Single instance is null");
@@ -45,14 +56,84 @@ public class CSVManager : MonoBehaviour
         }
         DontDestroyOnLoad(gameObject);//Dont destroy this singleton gameobject :(
 
-        
+
     }
     void Start()
     {
+        GetStyleList();
+        SetRewardList();
         SetIslandList();
 
-        SetRewardList();
+        //GetSkinItemData();
+        GetBlockItemData();
 
+
+    }
+    public void GetStyleList()
+    {
+        List<Dictionary<string, object>> item = CSVReader.Read("style");
+
+        for (int i = 0; i < item.Count; i++)
+        {
+            string txt = item[i]["style_text"].ToString();
+            string info = item[i]["style_info"].ToString();
+            string type = item[i]["type"].ToString();
+            string condition = item[i]["condition"].ToString();
+            int standard = int.Parse(item[i]["standard"].ToString());
+            int reward_boong = int.Parse(item[i]["reward_boong"].ToString());
+            int reward_heart = int.Parse(item[i]["reward_heart"].ToString());
+            string reward_item = item[i]["reward_item"].ToString();
+
+            Style style = new Style(txt, info, type, condition, standard, reward_boong, reward_heart, reward_item);
+            styleList.Add(style);
+            //StartCoroutine(style.CheckStyle());
+        }
+
+
+
+    }
+    public void GetSkinItemData()
+    {
+        List<Dictionary<string, object>> item = CSVReader.Read("item");
+
+        for (int i = 0; i < item.Count; i++)
+        {
+            string type = item[i]["type"].ToString();
+            if (type == "skin")
+            {
+                string name = item[i]["name"].ToString();
+                string info = item[i]["info"].ToString();
+                int boong = int.Parse(item[i]["boong"].ToString());
+                int skin_powder = int.Parse(item[i]["skin_powder"].ToString());
+                string path = item[i]["path"].ToString();
+
+                SkinItem skinItem = Instantiate(skinItemPrefab);
+                skinItem.Initialize(name, info, boong, skin_powder, path);
+                skinItems.Add(skinItem);
+            }
+        }
+    }
+    public void GetBlockItemData()
+    {
+        List<Dictionary<string, object>> item = CSVReader.Read("item");
+
+        for (int i = 0; i < item.Count; i++)
+        {
+            string type = item[i]["type"].ToString();
+            if (type == "blockPiece")
+            {
+                string name = item[i]["name"].ToString();
+                string info = item[i]["info"].ToString();
+                int block_powder = int.Parse(item[i]["block_powder"].ToString());
+                
+                string path = item[i]["path"].ToString();
+
+                BlockPiece blockPiece = Instantiate(blockPiecePrefab);
+                blockPiece.transform.SetParent(transform);
+                blockPiece.Initialize(name, info, block_powder, path);
+                blockPieces.Add(blockPiece);
+            }
+        }
     }
 
     public void SetIslandList()
@@ -73,18 +154,18 @@ public class CSVManager : MonoBehaviour
             List<List<int>> datas = MapString(stage[i]["data"].ToString().Split(','), height, width);
             List<List<int>> styles = new List<List<int>>();
 
-            
-            for(int h = 0; h < height; h++)
+
+            for (int h = 0; h < height; h++)
             {
-                
-                for(int w = 0; w < width; w++)
+
+                for (int w = 0; w < width; w++)
                 {
                     int blockNumber = datas[h][w];
                     styles.Add(GetStyleList(blockNumber, title));
                 }
             }
 
-            Debug.Log(stage[i]["posA"].ToString());
+ //           Debug.Log(stage[i]["posA"].ToString());
             Vector3 posA = GetVector3(stage[i]["posA"].ToString().Split('/'));
             Vector3 posB = GetVector3(stage[i]["posB"].ToString().Split('/'));
             bool isParfait = int.Parse(stage[i]["parfait"].ToString()) == 0 ? false : true;
@@ -98,55 +179,65 @@ public class CSVManager : MonoBehaviour
         }
     }
 
-    List<int> GetStyleList(int blockNumber,int title)
+    List<int> GetStyleList(int blockNumber, int title)
     {
         List<int> style = new List<int>();
 
-        
-            style.Add(title);
-            style.Add(title);
-            style.Add(title);
-            
-        
+
+        style.Add(title);
+        style.Add(title);
+        style.Add(title);
+
+
         return style;
     }
 
     public void SetRewardList()
     {
-        rewards_csv = CSVReader.Read("reward");
+        rewards_csv = CSVReader.Read("starReward");
+        //Debug.Log(rewards_csv.Count);
 
-        for (int i = 0; i < rewards.Count; i++)
+        for (int i = 0; i < rewards_csv.Count; i++)
         {
-            int island_num = int.Parse(rewards_csv[i]["island"].ToString());
-            int star_num = int.Parse(rewards_csv[i]["num"].ToString());
 
-            string reward = rewards_csv[i]["reward"].ToString();
-            int quantity = int.Parse(rewards_csv[i]["quantity"].ToString());
+
+            int island = int.Parse(rewards_csv[i]["island"].ToString());
+            int level = int.Parse(rewards_csv[i]["level"].ToString());
+
+            int boong = int.Parse(rewards_csv[i]["boong"].ToString());
+            int heart = int.Parse(rewards_csv[i]["heart"].ToString());
+            int block_powder = int.Parse(rewards_csv[i]["block_powder"].ToString());
+            int skin_powder = int.Parse(rewards_csv[i]["skin_powder"].ToString());
+            string item = rewards_csv[i]["item"].ToString();
+
+            //Debug.Log(item);
+
+
 
             Reward newReward = Instantiate(rewardPrefab, default);
-            newReward.SetReward(island_num, star_num, reward, quantity);
+            newReward.SetReward(island, level, boong, heart, block_powder, skin_powder, item);
 
             newReward.transform.SetParent(transform);
-            rewards[island_num].rewards.Add(newReward);
+            rewards[island].rewards.Add(newReward);
         }
     }
 
-    List<List<int>> MapString(string[] data_string , int height , int width)
+    List<List<int>> MapString(string[] data_string, int height, int width)
     {
 
         List<List<int>> map_datas = new List<List<int>>();
 
-        
+
         int count = 0;
 
-        for(int i = 0 ; i < height ; i++)
+        for (int i = 0; i < height; i++)
         {
             List<int> line = new List<int>();
-            for(int j = 0 ; j < width ; j++)
+            for (int j = 0; j < width; j++)
             {
                 int data = int.Parse(data_string[count]);
                 line.Add(data);
-                
+
                 count++;
             }
             map_datas.Add(line);
@@ -157,7 +248,7 @@ public class CSVManager : MonoBehaviour
 
     Vector3 GetVector3(string[] data_string)
     {
-        Debug.Log(data_string.Length);
+//        Debug.Log(data_string.Length);
 
         Vector3 pos = new Vector3();
         pos.x = int.Parse(data_string[0]);
@@ -170,7 +261,7 @@ public class CSVManager : MonoBehaviour
     List<int> GetList(string[] data_string)
     {
         List<int> list = new List<int>();
-        for(int i = 0 ; i < data_string.Length ; i++)
+        for (int i = 0; i < data_string.Length; i++)
         {
             list.Add(int.Parse(data_string[i]));
         }
@@ -185,27 +276,27 @@ public class CSVManager : MonoBehaviour
 
     public Map GetMap(int stage_num)
     {
-        for(int i = 0; i < IslandData.island_last.Length ; i++)
+        for (int i = 0; i < IslandData.island_last.Length; i++)
         {
             int island_last = IslandData.island_last[i];
             int island_num;
-            if(stage_num <= island_last)//이 섬에 해당하는 스테이지라면
+            if (stage_num <= island_last)//이 섬에 해당하는 스테이지라면
             {
                 if (i != 0)
                 {
                     island_num = stage_num - IslandData.island_last[i - 1];
                     return islands[i].maps[island_num - 1];
                 }
-                    
+
                 else
                 {
                     return islands[i].maps[stage_num];
                 }
-     
+
             }
         }
 
         return null;
     }
-    
+
 }
