@@ -48,7 +48,7 @@ public class MainSceneUIScript : UIScript
 	{
 		
 		soundManager = SoundManager.instance;
-		soundManager.ChangeBGM(0);
+		//soundManager.ChangeBGM(0);
 
 		int highLevel = awsManager.userInfo.stage_current;
 

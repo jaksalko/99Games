@@ -380,7 +380,7 @@ public class LoadingScene : MonoBehaviour
                 awsManager.StartCoroutine(awsManager.StartTimer());
                 play_button.interactable = true;
 
-
+                id.text = "UID : " + awsManager.userInfo.nickname;
             }
 
         }

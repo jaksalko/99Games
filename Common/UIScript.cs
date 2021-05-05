@@ -13,42 +13,36 @@ public class UIScript : MonoBehaviour
     protected AWSManager awsManager = AWSManager.instance;
     protected XMLManager xmlManager = XMLManager.ins;
     protected JsonAdapter jsonAdapter = JsonAdapter.instance;
+    protected CSVManager csvManager = CSVManager.instance;
     
-    void Awake()
-    {
-        gameManager = GameManager.instance;
-        awsManager = AWSManager.instance;
-        xmlManager = XMLManager.ins;
-        jsonAdapter = JsonAdapter.instance;
-
-    }
     void Start()
     {
         gameManager = GameManager.instance;
         awsManager = AWSManager.instance;
         xmlManager = XMLManager.ins;
         jsonAdapter = JsonAdapter.instance;
+        csvManager = CSVManager.instance;
 
     }
     public void Load_Island(int stage)
     {
-        if(stage <= IslandData.tutorial)
+        if(stage <= csvManager.islandData.tutorial)
         {
             SceneManager.LoadScene("Tutorial_Island");
         }
-        else if(stage <= IslandData.iceCream)
+        else if(stage <= csvManager.islandData.icecream)
         {
             SceneManager.LoadScene("Icecream_Island");
         }
-        else if (stage <= IslandData.beach)
+        else if (stage <= csvManager.islandData.beach)
         {
             SceneManager.LoadScene("Beach_Island");
         }
-        else if (stage <= IslandData.cracker)
+        else if (stage <= csvManager.islandData.cracker)
         {
             SceneManager.LoadScene("Cracker_Island");
         }
-        else if (stage <= IslandData.cottoncandy)
+        else if (stage <= csvManager.islandData.cottoncandy)
         {
             SceneManager.LoadScene("Cottoncandy_Island");
         }
@@ -56,25 +50,25 @@ public class UIScript : MonoBehaviour
 
 	public int Island_Name(int stage)
 	{
-        for(int i = 0 ; i < IslandData.island_last.Length ; i++)
+        for(int i = 0 ; i < csvManager.islandData.island_last.Length ; i++)
         {
-            if(stage <= IslandData.island_last[i])
+            if(stage <= csvManager.islandData.island_last[i])
             {
-                Debug.Log("island num : " + IslandData.island_last[i]);
+                Debug.Log("island num : " + csvManager.islandData.island_last[i]);
                 return i;
             }
         }
 
-        return IslandData.island_last.Length-1;
+        return csvManager.islandData.island_last.Length-1;
         
     }
 
     public string StageText(int stage)
     {
         string stageString = "STAGE ";
-        for(int i = 0 ; i < IslandData.island_last.Length ; i++)
+        for(int i = 0 ; i < csvManager.islandData.island_last.Length ; i++)
         {
-            if(stage <= IslandData.island_last[i])
+            if(stage <= csvManager.islandData.island_last[i])
             {
                 
                 stageString += (i+1).ToString() + " - ";
@@ -84,7 +78,7 @@ public class UIScript : MonoBehaviour
                 }
                 else
                 {
-                    stageString += (stage - IslandData.island_last[i-1]).ToString();
+                    stageString += (stage - csvManager.islandData.island_last[i-1]).ToString();
                 }
                 break;
             }

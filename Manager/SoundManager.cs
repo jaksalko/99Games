@@ -4,20 +4,22 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
-
+using UnityEngine.SceneManagement;
 
 public class SoundManager : MonoBehaviour
 {
 	public static SoundManager instance = null;
 
-	public AudioClip popupSound;
+	
 
 	
 
 	public AudioClip[] BGM;
-	AudioSource audioSource;
+	public AudioSource audioSource;
 	public AudioMixer bgmMixer;
 	public AudioMixer sfxMixer;
+
+	int scene_number;
 
 	void Awake()
 	{
@@ -34,9 +36,9 @@ public class SoundManager : MonoBehaviour
         }
         DontDestroyOnLoad(gameObject);//Dont destroy this singleton gameobject :(
 		
-		audioSource = gameObject.GetComponent<AudioSource>();
 		
-		
+		SceneManager.sceneLoaded += OnSceneLoaded;
+
 	}
 
     private void Start()
@@ -52,23 +54,50 @@ public class SoundManager : MonoBehaviour
 
     public void ChangeBGM(int num)
 	{
-
-		audioSource.loop = true;
-		audioSource.clip = BGM[num];
-		audioSource.Play();
+		if(BGM[num] != BGM[scene_number])
+        {
+			StartCoroutine(FadeInVolume());
+			audioSource.clip = BGM[num];
+			audioSource.loop = true;
+			audioSource.Play();
+		}
+		
 	}
 
     
 
-	public void GameResultPopup()
+	public void Mute()
 	{
-		audioSource.Stop();
-
-		audioSource.loop = false;
-		audioSource.clip = popupSound;
-
-		audioSource.Play();
+		audioSource.mute = true;
 	}
 
-	
+
+	IEnumerator FadeInVolume()
+    {
+		audioSource.mute = false;
+		float t = 0;
+
+		while(t <= 1)
+        {
+			t += Time.deltaTime * 0.3f;
+			audioSource.volume = t;
+
+			yield return null;
+        }
+
+		audioSource.volume = 1;
+		yield break;
+    }
+	public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+	{
+		
+
+		int scene_change = scene.buildIndex;
+
+		if(scene_change == scene_number)
+			StartCoroutine(FadeInVolume());
+
+		ChangeBGM(scene_change);
+		scene_number = scene_change;
+	}
 }

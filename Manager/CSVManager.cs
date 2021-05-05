@@ -24,7 +24,7 @@ public class CSVManager : MonoBehaviour
     public Map mapPrefab;
     public Reward rewardPrefab;
 
-
+    public IslandData islandData;
     // Start is called before the first frame update
 
     [Serializable]
@@ -138,7 +138,8 @@ public class CSVManager : MonoBehaviour
 
     public void SetIslandList()
     {
-        stage = CSVReader.Read("stage");
+        
+        stage = CSVReader.Read("stage_demo");
         Debug.Log("stage count : " + stage);
         for (int i = 0; i < stage.Count; i++)
         {
@@ -176,7 +177,14 @@ public class CSVManager : MonoBehaviour
 
             islands[title].maps.Add(newMap);
 
+            
         }
+
+        islandData = new IslandData(islands[0].maps.Count,
+            islands[1].maps.Count,
+            islands[2].maps.Count,
+            islands[3].maps.Count,
+            islands[4].maps.Count);
     }
 
     List<int> GetStyleList(int blockNumber, int title)
@@ -276,15 +284,15 @@ public class CSVManager : MonoBehaviour
 
     public Map GetMap(int stage_num)
     {
-        for (int i = 0; i < IslandData.island_last.Length; i++)
+        for (int i = 0; i < islandData.island_last.Length; i++)
         {
-            int island_last = IslandData.island_last[i];
+            int island_last = islandData.island_last[i];
             int island_num;
             if (stage_num <= island_last)//이 섬에 해당하는 스테이지라면
             {
                 if (i != 0)
                 {
-                    island_num = stage_num - IslandData.island_last[i - 1];
+                    island_num = stage_num - islandData.island_last[i - 1];
                     return islands[i].maps[island_num - 1];
                 }
 

@@ -3,26 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public static class IslandData
+public class IslandData
 {
-    public const int
-        tutorial = 4,   // 0 - 4
-        iceCream = 16,  // 5-6
-        beach = 26,     // 7-8
-        cracker = 37,   //9-11
-        cottoncandy = 47;//37
+    public int
+        tutorial,   // 0 - 4
+        icecream,  // 5-6
+        beach,     // 7-8
+        cracker,   //9-11
+        cottoncandy;//37
 
-    public const string
-        stage1 = "Tutorial_Island",
-        stage2 = "Icecream_Island",
-        stage3 = "Beach_Island",
-        stage4 = "Cracker_Island",
-        stage5 = "Cottoncandy_Island";
 
-    public const int lastLevel = 47;//13
-    public static int[] island_last = { tutorial, iceCream, beach, cracker, cottoncandy };
+    public int lastLevel;//13
+    public int[] island_last;
 
-    public static int Island_Num(int stage)
+    public int Island_Num(int stage)
     {
         for (int i = 0; i < island_last.Length; i++)
         {
@@ -36,4 +30,18 @@ public static class IslandData
         return -1;
 
     }
+
+    public IslandData(int tutorial_ , int icecream_ ,int beach_ , int cracker_ , int cottoncandy_)
+    {
+        tutorial = tutorial_;
+        icecream = tutorial + icecream_;
+        beach = icecream + beach_;
+        cracker = beach + cracker_;
+        cottoncandy = cracker + cottoncandy_;
+
+        lastLevel = cottoncandy;
+
+        island_last = new int[] { tutorial, icecream, beach, cracker, cottoncandy };
+    }
+   
 }

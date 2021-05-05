@@ -29,7 +29,7 @@ public class ButtonManager_Level : UIScript
 		
 		highLevel = awsManager.userInfo.stage_current;
 
-		content.localPosition = new Vector3(2160 - 1080*IslandData.Island_Num(highLevel),0,0);
+		content.localPosition = new Vector3(2160 - 1080* csvManager.islandData.Island_Num(highLevel),0,0);
 
 		Debug.Log("high level : " + highLevel);
 
@@ -47,7 +47,7 @@ public class ButtonManager_Level : UIScript
 			newButton.transform.SetParent(stageScrollView[newButton.island],false);
 		}
 
-		for (int l = highLevel ; l <= IslandData.lastLevel ; l++)
+		for (int l = highLevel ; l <= csvManager.islandData.lastLevel ; l++)
         {
 			LevelButton newButton = Instantiate(buttonPrefab,default);
 			newButton.SetStarImage(0);

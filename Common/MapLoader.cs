@@ -257,7 +257,7 @@ public class MapLoader : MonoBehaviour
     {
         
         int len = 0;
-        if(index <= IslandData.tutorial)
+        if(index <= csvManager.islandData.tutorial)
         {
             Debug.Log(csvManager);
             Debug.Log(csvManager.islands[0].maps[index]);
@@ -265,24 +265,24 @@ public class MapLoader : MonoBehaviour
 
 
         }
-        else if(index <= IslandData.iceCream)
+        else if(index <= csvManager.islandData.icecream)
         {
-            len = IslandData.tutorial + 1;
+            len = csvManager.islandData.tutorial + 1;
             liveMap = csvManager.islands[1].maps[index-len];
         }
-        else if(index <= IslandData.beach)
+        else if(index <= csvManager.islandData.beach)
         {
-            len = IslandData.iceCream + 1;
+            len = csvManager.islandData.icecream + 1;
             liveMap = csvManager.islands[2].maps[index-len];
         }
-        else if(index <= IslandData.cracker)
+        else if(index <= csvManager.islandData.cracker)
         {
-            len = IslandData.beach + 1;
+            len = csvManager.islandData.beach + 1;
             liveMap = csvManager.islands[3].maps[index-len];
         }
-        else if(index <= IslandData.cottoncandy)
+        else if(index <= csvManager.islandData.cottoncandy)
         {
-            len = IslandData.cracker + 1;
+            len = csvManager.islandData.cracker + 1;
             Debug.Log("cotton :" + (index - len));
             liveMap = csvManager.islands[4].maps[index-len];
         }

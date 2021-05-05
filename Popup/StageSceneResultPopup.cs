@@ -25,20 +25,20 @@ public class StageSceneResultPopup : UIScript
 
         if(isSuccess)
         {
-            if(gameManager.nowLevel < IslandData.tutorial)
+            if(gameManager.nowLevel < csvManager.islandData.tutorial)
             {
                 homeBtn.gameObject.SetActive(false);
             }
 
             successEffect.SetActive(true);
             successPopup.SetActive(true);
-            for(int i = 0 ; i < IslandData.island_last.Length ; i++)
+            for(int i = 0 ; i < csvManager.islandData.island_last.Length ; i++)
             {
                 Debug.Log(gameManager);
-                Debug.Log(IslandData.island_last.Length);
-                Debug.Log(IslandData.island_last[i]);
+                Debug.Log(csvManager.islandData.island_last.Length);
+                Debug.Log(csvManager.islandData.island_last[i]);
 
-                if(gameManager.nowLevel == IslandData.island_last[i])
+                if(gameManager.nowLevel == csvManager.islandData.island_last[i])
                 {
                     nextButton.gameObject.SetActive(false);
                 }

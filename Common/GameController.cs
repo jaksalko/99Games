@@ -12,7 +12,7 @@ public class GameController : MonoBehaviour
     public static GameController instance;
     XMLManager xmlManager = XMLManager.ins;
     AWSManager awsManager = AWSManager.instance;
-
+    CSVManager csvManager = CSVManager.instance;
     [Header("Controller Field")]
     public CameraController cameraController;
     public UiController ui;
@@ -102,8 +102,8 @@ public class GameController : MonoBehaviour
         soundManager = SoundManager.instance;
         awsManager = AWSManager.instance;
         jsonAdapter = JsonAdapter.instance;
-        soundManager.ChangeBGM(SceneManager.GetActiveScene().buildIndex);//섬 7-11
-
+        csvManager = CSVManager.instance;
+        
         SwipeStream();
         GameSetting();
     }
@@ -389,19 +389,19 @@ public class GameController : MonoBehaviour
             tutorialManager.gameObject.SetActive(true);
         }
         
-        if(awsManager.userInfo.stage_current == IslandData.tutorial+1 && gameManager.nowLevel == IslandData.tutorial+1)//ice 1
+        if(awsManager.userInfo.stage_current == csvManager.islandData.tutorial+1 && gameManager.nowLevel == csvManager.islandData.tutorial+1)//ice 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
-        else if(awsManager.userInfo.stage_current == IslandData.iceCream+1 && gameManager.nowLevel == IslandData.iceCream+1)//beach 1
+        else if(awsManager.userInfo.stage_current == csvManager.islandData.icecream+1 && gameManager.nowLevel == csvManager.islandData.icecream+1)//beach 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
-        else if(awsManager.userInfo.stage_current == IslandData.beach+1 && gameManager.nowLevel == IslandData.beach+1)//cracker 1
+        else if(awsManager.userInfo.stage_current == csvManager.islandData.beach+1 && gameManager.nowLevel == csvManager.islandData.beach+1)//cracker 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
-        else if(awsManager.userInfo.stage_current == IslandData.cracker+1 && gameManager.nowLevel == IslandData.cracker+1)//cotton 1
+        else if(awsManager.userInfo.stage_current == csvManager.islandData.cracker+1 && gameManager.nowLevel == csvManager.islandData.cracker+1)//cotton 1
         {
             tutorialManager.gameObject.SetActive(true);
         }
@@ -446,6 +446,8 @@ public class GameController : MonoBehaviour
 
     public void GameEnd(bool isSuccess)
     {
+        soundManager.Mute();
+
         UserHistory userHistory = awsManager.userHistory;
         UserInfo userInfo = awsManager.userInfo;
 
@@ -454,6 +456,7 @@ public class GameController : MonoBehaviour
         Debug.Log("Game End... PlayTime : " + (endTime - startTime));
 
         ui.GameEnd(isSuccess,star,snow_remain,moveCount, customMode, editorMode);
+       
 
         if (customMode)
         {
@@ -474,7 +477,7 @@ public class GameController : MonoBehaviour
                 userHistory.stage_clear++;
                 
 
-                if (nowLevel == IslandData.tutorial)
+                if (nowLevel == csvManager.islandData.tutorial)
                 {
                     PlayerPrefs.SetInt("tutorial",1);
                     
@@ -491,7 +494,7 @@ public class GameController : MonoBehaviour
                     jsonAdapter.CreateUserStage(newStageClear, WebCallback);
 
                     userInfo.stage_current++;
-                    userInfo.boong += 200 + IslandData.Island_Num(nowLevel) * 50;
+                    userInfo.boong += 200 + csvManager.islandData.Island_Num(nowLevel) * 50;
 
                 }
                 else
@@ -525,15 +528,6 @@ public class GameController : MonoBehaviour
             
         }
 
-
-
-            soundManager.GameResultPopup();
-
-
-
-
-        
-        
 
     }
 

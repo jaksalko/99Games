@@ -49,10 +49,10 @@ public class Island : MonoBehaviour
     void SetStageText() // only mainscene button
     {
         string stageString = "STAGE ";
-        for(int i = 0 ; i < IslandData.island_last.Length ; i++)
+        for(int i = 0 ; i < csvManager.islandData.island_last.Length ; i++)
         {
             
-            if(user_stage <= IslandData.island_last[i])//stage == current stage
+            if(user_stage <= csvManager.islandData.island_last[i])//stage == current stage
             {
                 island = i;
                 stageString += (i+1).ToString() + " - ";
@@ -62,7 +62,7 @@ public class Island : MonoBehaviour
                 }
                 else
                 {
-                    stageString += (user_stage - IslandData.island_last[i-1]).ToString();
+                    stageString += (user_stage - csvManager.islandData.island_last[i-1]).ToString();
                 }
                 break;
             }
@@ -84,7 +84,7 @@ public class Island : MonoBehaviour
         int island_start_num = 0; //스테이지의 시작번호
 
         if (island != 0)
-            island_start_num = IslandData.island_last[island - 1] + 1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
+            island_start_num = csvManager.islandData.island_last[island - 1] + 1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
         else
             island_start_num = 0;
 
@@ -105,12 +105,12 @@ public class Island : MonoBehaviour
         int island_start_num = 0;
 
         if(island != 0 )
-            island_start_num = IslandData.island_last[island-1]+1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
+            island_start_num = csvManager.islandData.island_last[island-1]+1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
 
         int maxValue = stage_num * 3;
         int userValue = 0;
 
-        if(user_stage < IslandData.island_last[island])//아직 그 섬을 깨지 못함
+        if(user_stage <= csvManager.islandData.island_last[island])//아직 그 섬을 깨지 못함
         {
             medal.SetActive(false);
             island_image.sprite = Resources.Load<Sprite>("LevelScene/island_" + island + "_none");
@@ -126,7 +126,7 @@ public class Island : MonoBehaviour
             island_image.sprite = Resources.Load<Sprite>("LevelScene/island_"+island+"_clear");
 
 
-            for (int i = island_start_num ; i <= IslandData.island_last[island] ; i++)
+            for (int i = island_start_num ; i <= csvManager.islandData.island_last[island] ; i++)
             {
                 userValue += awsManager.userStage[i].stage_star;
             }

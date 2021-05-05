@@ -169,7 +169,7 @@ public class MapGenerator : MonoBehaviour
 
     private void Start()
     {
-        SoundManager.instance.ChangeBGM(SceneManager.GetActiveScene().buildIndex);//섬 7-11
+        //SoundManager.instance.ChangeBGM(SceneManager.GetActiveScene().buildIndex);//섬 7-11
     }
     public void BackPopupClicked()
     {

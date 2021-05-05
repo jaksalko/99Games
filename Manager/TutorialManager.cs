@@ -597,11 +597,11 @@ public class TutorialManager : MonoBehaviour
     {
         int stage = AWSManager.instance.userInfo.stage_current;
 
-        for (int i = 0; i < IslandData.island_last.Length; i++)
+        for (int i = 0; i < CSVManager.instance.islandData.island_last.Length; i++)
         {
-            if (stage <= IslandData.island_last[i])
+            if (stage <= CSVManager.instance.islandData.island_last[i])
             {
-                Debug.Log("island num : " + IslandData.island_last[i]);
+                Debug.Log("island num : " + CSVManager.instance.islandData.island_last[i]);
                 return i;
             }
         }
@@ -683,7 +683,7 @@ public class TutorialManager : MonoBehaviour
             progresses[now_count].target_text.transform.parent.gameObject.SetActive(false);
             now_count++;
         }
-        PlayerPrefs.SetInt("tutorial",IslandData.tutorial+1);
+        PlayerPrefs.SetInt("tutorial", CSVManager.instance.islandData.tutorial+1);
         gameObject.SetActive(false);
     }
 

@@ -27,9 +27,9 @@ public class LevelButton : UIScript
     {
         string stageString = "STAGE ";
 
-        for(int i = 0 ; i < IslandData.island_last.Length ; i++)
+        for(int i = 0 ; i < csvManager.islandData.island_last.Length ; i++)
         {
-            if(stage <= IslandData.island_last[i])
+            if(stage <= csvManager.islandData.island_last[i])
             {
                 island = i;
                 stageString += (i+1).ToString() + " - ";
@@ -39,7 +39,7 @@ public class LevelButton : UIScript
                 }
                 else
                 {
-                    stageString += (stage - IslandData.island_last[i-1]).ToString();
+                    stageString += (stage - csvManager.islandData.island_last[i-1]).ToString();
                 }
                 break;
             }
