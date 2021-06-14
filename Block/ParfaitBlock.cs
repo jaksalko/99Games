@@ -22,6 +22,7 @@ public class ParfaitBlock : Block
 	public AudioClip meltSound;
     public override void Init(int block_num,int style)
     {
+        isClear = false;
         base.Init(block_num,style);
 
         int parfait_num = block_num % 10 - 1;
@@ -36,6 +37,7 @@ public class ParfaitBlock : Block
             case BlockNumber.upperParfaitA:
                 sequence = 0;
                 Activate();
+                
                 break;
 
             case BlockNumber.parfaitB:

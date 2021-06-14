@@ -6,9 +6,46 @@ using UniRx;
 using UniRx.Triggers;
 using System;
 using UnityEngine.EventSystems;
+using System.Linq;
 
 public class GameController : MonoBehaviour
 {
+    public class EditorClearRequest
+    {
+        public UserInfo userInfo;//붕과 별사탕 업데이트
+        public UserHistory userHistory;//에디터 클리어 정보와 재화 획득 기록
+        public UserStage userStage;//클리어 한 에디터 맵 추가
+        public EditorMap editorMap;//플레이 한 에디터 맵 업데이트
+
+        public EditorClearRequest(UserInfo info, UserHistory history, UserStage stage, EditorMap map)
+        {
+            userInfo = info;
+            userHistory = history;
+            userStage = stage;
+            editorMap = map;
+        }
+
+    }
+
+    public class StageClearRequest
+    {
+        public UserInfo userInfo;//붕과 별사탕 업데이트
+        public UserHistory userHistory;//에디터 클리어 정보와 재화 획득 기록
+        public UserStage userStage;//클리어 한 에디터 맵 추가
+
+
+        public StageClearRequest(UserInfo info, UserHistory history, UserStage stage)
+        {
+            userInfo = info;
+            userHistory = history;
+            userStage = stage;
+
+        }
+
+    }
+
+    
+
     public static GameController instance;
     XMLManager xmlManager = XMLManager.ins;
     AWSManager awsManager = AWSManager.instance;
@@ -26,8 +63,10 @@ public class GameController : MonoBehaviour
     Map map;
     public Map GetMap() { return map; }
     public int snow_total, snow_remain;
-    public int moveCount; 
-
+    public int moveCount;
+    public bool isSuccess;
+    UserInfo copyInfo;
+    UserHistory copyHistory;
     [Header ("For Achievement Datas")]
     int dropCount; // 몇번 떨어졌는지
     int crashCount; // 몇번 부딪혔는지 (캐릭터)
@@ -46,7 +85,7 @@ public class GameController : MonoBehaviour
 
     public bool customMode;
     public bool editorMode;
-
+    public int unirx_dir = -1;
 
 
 
@@ -54,6 +93,7 @@ public class GameController : MonoBehaviour
     public static bool Playing
     {
         get => instance.isPlaying;
+        set => instance.isPlaying = value;
     }
 
     public float startTime, endTime;
@@ -62,8 +102,6 @@ public class GameController : MonoBehaviour
 
     SoundManager soundManager;
     GameManager gameManager = GameManager.instance;
-
-
     JsonAdapter jsonAdapter = JsonAdapter.instance;
     
 
@@ -76,8 +114,7 @@ public class GameController : MonoBehaviour
 
     InputHandler handler;
     public MoveCommand moveCommand;
-
-    public GameObject tutorialManager;
+    public TutorialManager tutorialManager;
 
     int star = 3;
 
@@ -106,6 +143,9 @@ public class GameController : MonoBehaviour
         
         SwipeStream();
         GameSetting();
+
+        this.ObserveEveryValueChanged(x => parfaitOrder)
+            .Subscribe(x => ui.ParfaitDone(parfaitOrder));
     }
     
     void SwipeStream()
@@ -146,15 +186,15 @@ public class GameController : MonoBehaviour
 #endif
 
     }
-    void MakeMoveCommand()
+    public void MakeMoveCommand()
     {
-        int dir = NormalizeSwipe();
+        unirx_dir = NormalizeSwipe();
 
         //make command;
-        if (!nowPlayer.Moving() && isPlaying && dir != -1)
+        if (!nowPlayer.Moving() && isPlaying && unirx_dir != -1)
         {
 
-            moveCommand = new MoveCommand(nowPlayer, map, dir);
+            moveCommand = new MoveCommand(nowPlayer, map, unirx_dir);
 
             handler.ExecuteCommand(moveCommand);
             moveCount++;
@@ -245,7 +285,7 @@ public class GameController : MonoBehaviour
     }
     void GameSetting()
     {
-        // map 생성
+        
         if (customMode)
         {
             map = mapLoader.CustomPlayMap();
@@ -314,6 +354,7 @@ public class GameController : MonoBehaviour
 
         //카메라 활성화
         cameraController.gameObject.SetActive(true);
+        
 
         
     }
@@ -375,37 +416,30 @@ public class GameController : MonoBehaviour
         {
             ui.mission_parfait.SetActive(true);
         }
-        else
-        {
-            ui.mission_default.SetActive(true);
-        }
+        
         ui.inGame.SetActive(true);
 
-        
-
-        //if tutorial mode active tutorial!
-        if(PlayerPrefs.GetInt("tutorial",0) == 0)
+        if(SceneManager.GetActiveScene().buildIndex >= 6)
         {
-            tutorialManager.gameObject.SetActive(true);
+            if (gameManager.nowLevel >= 0 && gameManager.nowLevel <= csvManager.islandData.tutorial)
+            {
+                tutorialManager.StartTutorial();
+            }
+            else
+            {
+                for (int i = 0; i < csvManager.islandData.island_start.Length; i++)
+                {
+                    if (csvManager.islandData.island_start[i] == gameManager.nowLevel)
+                    {
+                        tutorialManager.StartTutorial();
+                        break;
+                    }
+                }
+            }
         }
         
-        if(awsManager.userInfo.stage_current == csvManager.islandData.tutorial+1 && gameManager.nowLevel == csvManager.islandData.tutorial+1)//ice 1
-        {
-            tutorialManager.gameObject.SetActive(true);
-        }
-        else if(awsManager.userInfo.stage_current == csvManager.islandData.icecream+1 && gameManager.nowLevel == csvManager.islandData.icecream+1)//beach 1
-        {
-            tutorialManager.gameObject.SetActive(true);
-        }
-        else if(awsManager.userInfo.stage_current == csvManager.islandData.beach+1 && gameManager.nowLevel == csvManager.islandData.beach+1)//cracker 1
-        {
-            tutorialManager.gameObject.SetActive(true);
-        }
-        else if(awsManager.userInfo.stage_current == csvManager.islandData.cracker+1 && gameManager.nowLevel == csvManager.islandData.cracker+1)//cotton 1
-        {
-            tutorialManager.gameObject.SetActive(true);
-        }
 
+        
         
             
     }
@@ -444,28 +478,65 @@ public class GameController : MonoBehaviour
     #endregion
 
 
-    public void GameEnd(bool isSuccess)
+    public void GameEnd(bool success)
     {
+        isSuccess = success;
         soundManager.Mute();
 
-        UserHistory userHistory = awsManager.userHistory;
-        UserInfo userInfo = awsManager.userInfo;
+        copyHistory = awsManager.userHistory.DeepCopy();
+        copyInfo = awsManager.userInfo.DeepCopy();
 
         isPlaying = false;
         endTime = Time.time;
         Debug.Log("Game End... PlayTime : " + (endTime - startTime));
 
-        ui.GameEnd(isSuccess,star,snow_remain,moveCount, customMode, editorMode);
+        
        
-
+        
         if (customMode)
         {
+            
+            copyHistory.editor_clear++;
+            
+            if (gameManager.playCustomData.move > moveCount)
+            {
+                gameManager.playCustomData.move = moveCount;
+            }
+            //이미 클리어한 맵이라면 업데이트, 아니면 인서트
+            UserStage newStageClear = new UserStage(copyInfo.nickname, gameManager.playCustomData.map_no, star, moveCount);
+            EditorClearRequest editorClearRequest = new EditorClearRequest(copyInfo, copyHistory, newStageClear, gameManager.playCustomData);
+
+            if (!awsManager.userEditorStage.Exists(x => x.stage_num == gameManager.playCustomData.map_no))
+            {
+                Debug.Log(gameManager.playCustomData.map_no);
+                //최초 클리어 시
+                //붕 별사탕 보상 획득
+                copyInfo.boong += gameManager.playCustomData.level * 100;
+                copyInfo.candy += gameManager.playCustomData.level;
+                copyHistory.boong_get += gameManager.playCustomData.level * 100;
+
+                //플레이 카운트 +1
+                gameManager.playCustomData.play_count++;
+                
+
+                jsonAdapter.UpdateData(editorClearRequest,"newEditorStage", GameEndCallback);
+            }
+            else
+            {
+                //이미 클리어
+                jsonAdapter.UpdateData(editorClearRequest,"updateEditorStage", GameEndCallback);
+
+
+            }
+            
+           
             
 
         }
         else if (editorMode)//mapLoader.editorMap 생성하기
         {
-            
+            awsManager.userHistory.editor_make++;
+            jsonAdapter.UpdateData(awsManager.userHistory, "userHistory", GameEndCallback);
         }
         else//stage mode
         {
@@ -474,27 +545,25 @@ public class GameController : MonoBehaviour
 
             if(isSuccess)
             {
-                userHistory.stage_clear++;
-                
-
-                if (nowLevel == csvManager.islandData.tutorial)
+                if (level >= csvManager.islandData.island_last[0] && PlayerPrefs.GetInt("tutorial", 0) == 0)
                 {
-                    PlayerPrefs.SetInt("tutorial",1);
-                    
+                    PlayerPrefs.SetInt("tutorial", 1);
+
                 }
 
+                copyHistory.stage_clear++;
                 
 
                 if (nowLevel == level)//지금 스테이지 레벨 == 유저의 도전해야할 레벨
                 {
                     Debug.Log("high level");
-                    UserStage newStageClear = new UserStage(userInfo.nickname, userInfo.stage_current, star, moveCount);
-
-                    awsManager.userStage.Add(newStageClear);
-                    jsonAdapter.CreateUserStage(newStageClear, WebCallback);
-
-                    userInfo.stage_current++;
-                    userInfo.boong += 200 + csvManager.islandData.Island_Num(nowLevel) * 50;
+                    UserStage newStageClear = new UserStage(copyInfo.nickname, copyInfo.stage_current, star, moveCount);
+                    copyInfo.stage_current++;
+                    copyInfo.boong += 200 + csvManager.islandData.Island_Num(nowLevel) * 50;
+                    copyHistory.boong_get = 200 + csvManager.islandData.Island_Num(nowLevel) * 50;
+                    StageClearRequest stageClearRequest = new StageClearRequest(copyInfo, copyHistory, newStageClear);
+                    jsonAdapter.UpdateData(stageClearRequest,"newStage", GameEndCallback);
+                    
 
                 }
                 else
@@ -508,21 +577,20 @@ public class GameController : MonoBehaviour
                         awsManager.userStage[nowLevel].stage_move = moveCount;
                     }
 
-                    
-                    jsonAdapter.UpdateData(awsManager.userStage[nowLevel], "userStage", WebCallback);
-                    
+
+                    StageClearRequest stageClearRequest = new StageClearRequest(copyInfo, copyHistory, awsManager.userStage[nowLevel]);
+                    jsonAdapter.UpdateData(stageClearRequest, "updateStage", GameEndCallback);
+
                 }
             }
-            else
+            else//fail stage
             {
-                userHistory.stage_fail++;
-
+                copyHistory.stage_fail++;
+                jsonAdapter.UpdateData(copyHistory, "userHistory", GameEndCallback);
                 //실패 시
             }
 
-            //xmlManager.SaveItems();
-            jsonAdapter.UpdateData(userInfo, "userInfo", WebCallback);
-            jsonAdapter.UpdateData(userHistory, "userHistory",WebCallback);
+            
 
 
             
@@ -530,14 +598,39 @@ public class GameController : MonoBehaviour
 
 
     }
-
-    void WebCallback(bool success)
+    
+    void GameEndCallback(bool success)
     {
         if (success)
         {
             if (jsonAdapter.EndLoading())
             {
-                //
+                jsonAdapter.GetAllUserData(awsManager.userInfo.nickname, UpdateUserDataCallback);
+
+                if(customMode)
+                {
+                    CustomMapItem map = awsManager.editorMap.Find(x => x.itemdata.map_id == GameManager.instance.playCustomData.map_id);
+                    map.itemdata = GameManager.instance.playCustomData;
+                    map.play.text = map.itemdata.play_count.ToString();
+                }
+            }
+
+        }
+        else
+        {
+            Debug.LogError("fail load user");
+        }
+    }
+
+    void UpdateUserDataCallback(bool success)
+    {
+        if (success)
+        {
+            if (jsonAdapter.EndLoading())
+            {
+                ui.GameEnd(isSuccess, star, snow_remain, moveCount, customMode, editorMode);
+                if (customMode)
+                    gameManager.retry = true;
             }
 
         }

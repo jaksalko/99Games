@@ -38,44 +38,44 @@ public class Reward : MonoBehaviour
         {
             RewardItem reward = Instantiate(rewardItemPrefab);
             reward.transform.SetParent(transform,false);
-            reward.SetRewardItem("Reward/boong", boong + " 붕");
+            reward.SetRewardItem("Reward/boong", "Reward/back", boong);
             rewardItems.Add(reward);
         }
         if(heart != 0)
         {
             RewardItem reward = Instantiate(rewardItemPrefab);
             reward.transform.SetParent(transform,false);
-            reward.SetRewardItem("Reward/heart", heart + " 개");
+            reward.SetRewardItem("Reward/heart", "Reward/back", heart);
             rewardItems.Add(reward);
         }
         if (block_powder != 0)
         {
             RewardItem reward = Instantiate(rewardItemPrefab);
             reward.transform.SetParent(transform,false);
-            reward.SetRewardItem("Reward/block_powder", block_powder + " 개");
+            reward.SetRewardItem("Reward/block_powder", "Reward/back", block_powder);
             rewardItems.Add(reward);
         }
         if (skin_powder != 0)
         {
             RewardItem reward = Instantiate(rewardItemPrefab);
             reward.transform.SetParent(transform,false);
-            reward.SetRewardItem("Reward/skin_powder", skin_powder + " 개");
+            reward.SetRewardItem("Reward/skin_powder", "Reward/back", skin_powder);
             rewardItems.Add(reward);
         }
 
         if(item != "none")
         {
             Debug.Log("item");
-            userInventory = new UserInventory(AWSManager.instance.userInfo.nickname , item);
+            userInventory = new UserInventory(PlayerPrefs.GetString("nickname","pingpengboong") , item);
             RewardItem reward = Instantiate(rewardItemPrefab);
             reward.transform.SetParent(transform,false);
-            reward.SetRewardItem("Reward/"+ item, item);//Image path , reward object
+            reward.SetRewardItem("Reward/"+ item,"Reward/skinback", 1);//Image path , reward object
             rewardItems.Add(reward);
         }
         else
         {
             Debug.Log("none");
-            userInventory = new UserInventory(AWSManager.instance.userInfo.nickname, "none");
+            userInventory = new UserInventory(PlayerPrefs.GetString("nickname", "pingpengboong"), "none");
         }
 
       

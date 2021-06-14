@@ -12,6 +12,8 @@ using UnityEngine.SceneManagement;
 
 public class MapGenerator : MonoBehaviour
 {
+    public HemiSphereCamera hemiSphereCamera;
+
     public Button completeButton;
     public Image eraseButtonImage;
     [Header("Prefabs")]
@@ -60,14 +62,14 @@ public class MapGenerator : MonoBehaviour
     
     public Text warning;
 
-    public GameObject gameResource;//Simulator object
+    public GameController gameResource;//Simulator object
     public GameObject generatorResource;//MapGenerator Object
-
+    GameController simulator;
     public RectTransform bottomUI;
     
 
     bool editMode = false;
-    BlockFactory blockFactory;
+    public BlockFactory blockFactory;
 
     Indexer selected_indexer;
     public Button eraseButton;
@@ -86,26 +88,51 @@ public class MapGenerator : MonoBehaviour
 
     public bool activeClick = true;
     public bool moveBlock = false;
+
+    public TutorialManager tutorialManager;
     private void Awake()
     {
-        //maxSize = GameManager.instance.maxSize; //고정되었습니다
+       
         BlockPositionEditor();
-        blockFactory = BlockFactory.instance;
+        
         
         checkListPopup.SetCheckList(character_count, parfait_count);
-        
-        //Camera Setting
-        /*
-        
-        center = new Vector3(maxSize.x / 2 -0.5f , 0f, maxSize.y / 2 - 0.5f);
-        angle = -90f;
-        distance = maxSize.x;
-        TopView();
-        */
+
+        if(PlayerPrefs.GetInt("editorMake", 0) == 0)
+            tutorialManager.StartTutorial();
 
 
 #if UNITY_EDITOR
+
         this.UpdateAsObservable()
+        .Where(_ => hemiSphereCamera.touchstream)
+        .Where(_ => hemiSphereCamera.touchValue == 1)
+                .Where(_ => !editMode)
+                .Where(_ => Input.touchCount > 0)
+                .Where(_ => Input.GetTouch(0).phase == TouchPhase.Moved)
+               .Select(ray => cam.ScreenPointToRay(Input.GetTouch(0).position))
+               .Subscribe(ray => MakeBlock(ray));
+
+        this.UpdateAsObservable()
+                .Where(_ => activeClick)
+                .Where(_ => editMode)
+                .Where(_ => Input.touchCount > 0)
+                .Where(_ => Input.GetTouch(0).phase == TouchPhase.Ended)
+              .Select(mouse => Input.GetTouch(0).position)
+              .Subscribe(mouse => SelectBlock(mouse));
+
+        this.UpdateAsObservable()
+                .Where(_ => !activeClick)
+                .Where(_ => editMode)
+                .Where(_ => moveBlock)
+                .Where(_ => Input.touchCount > 0)
+                    .Where(_ => Input.GetTouch(0).phase == TouchPhase.Began)
+                    .Select(ray => cam.ScreenPointToRay(Input.GetTouch(0).position))
+                    .Subscribe(ray => MakeBlock(ray));
+
+        /*
+        this.UpdateAsObservable()
+
             .Where(_ => !editMode)
                .Where(_ => Input.GetMouseButton(0))
                .Select(ray => cam.ScreenPointToRay(Input.mousePosition))
@@ -127,7 +154,7 @@ public class MapGenerator : MonoBehaviour
               .Where(_ => Input.GetMouseButtonDown(0))
                .Select(ray => cam.ScreenPointToRay(Input.mousePosition))
                .Subscribe(ray => MakeBlock(ray));
-
+        */
 
 
         /*
@@ -140,6 +167,8 @@ public class MapGenerator : MonoBehaviour
 #else
 
         this.UpdateAsObservable()
+        .Where(_ => hemiSphereCamera.touchstream)
+        .Where(_ => hemiSphereCamera.touchValue == 1)
                 .Where(_ => !editMode)
                 .Where(_ => Input.touchCount > 0)
                 .Where(_ => Input.GetTouch(0).phase == TouchPhase.Moved)
@@ -197,22 +226,56 @@ public class MapGenerator : MonoBehaviour
         if(editMode)
         {
             eraseButtonImage.sprite = Resources.Load<Sprite>("Editor/Frame/eraser_on");
-            bottomUI.anchoredPosition += Vector2.down * 470f;
+            //bottomUI.anchoredPosition += Vector2.down * 470f;
+            StartCoroutine(BottomUIMovement());
             characterButtons[0].gameObject.SetActive(false);
             characterButtons[1].gameObject.SetActive(false);
         }
         else
         {
             eraseButtonImage.sprite = Resources.Load<Sprite>("Editor/Frame/eraser_off");
-            //bottomUI.position += Vector3.up * 470f;
-            bottomUI.anchoredPosition += Vector2.up * 470f;
+            
+            StartCoroutine(BottomUIMovement());
+            //bottomUI.anchoredPosition += Vector2.up * 470f;
             characterButtons[0].gameObject.SetActive(true);
             characterButtons[1].gameObject.SetActive(true);
         }
     }
 
+    IEnumerator BottomUIMovement()
+    {
+        float t = 0;
+        float y = 0;
+        float anchored_y = bottomUI.anchoredPosition.y;
+
+        if (editMode)
+        {
+            anchored_y = bottomUI.anchoredPosition.y - 470f;
+        }
+        else
+        {
+            anchored_y = bottomUI.anchoredPosition.y + 470f;
+        }
+
+        while (t <= 1)
+        {
+            y = Mathf.Lerp(bottomUI.anchoredPosition.y, anchored_y, t);
+            
+            Debug.Log(anchored_y);
+            bottomUI.anchoredPosition = new Vector2(bottomUI.anchoredPosition.x, y);
+
+            t += Time.deltaTime;
+
+            yield return null;
+
+        }
+
+        
+    }
+
     void MakeBlock(Ray ray)
     {
+        Debug.Log("make");
         if (Physics.Raycast(ray, out hit, 1000))
         {
             if (hit.transform.CompareTag("Indexer"))
@@ -639,11 +702,11 @@ public class MapGenerator : MonoBehaviour
                 indexer_count++;
             }
         }
-        maxSize.y = height_max - height_min + 1;
-        maxSize.x = width_max - width_min + 1;
+        //maxSize.y = height_max - height_min + 1;
+        //maxSize.x = width_max - width_min + 1;
 
-        int height = (int)maxSize.y + 2;
-        int width = (int)maxSize.x + 2;
+        int height = height_max - height_min + 3;
+        int width = width_max - width_min + 3;
 
       
         //initialize data and style list
@@ -709,11 +772,16 @@ public class MapGenerator : MonoBehaviour
         RenderSettings.skybox = play_skybox;
 
 
-        GetEditorMap();
+        
+
+        
+        
+        simulator = Instantiate(gameResource);
+        newMap = simulator.mapLoader.editorMap;
+        GetEditorMap();//initialize newMap
 
         generatorResource.SetActive(false);
-        gameResource.SetActive(true);
-
+        simulator.gameObject.SetActive(true);
         //newMap.Initialize();
         /*
         if(parfait_count == 4)
@@ -755,6 +823,19 @@ public class MapGenerator : MonoBehaviour
         gameResource.SetActive(true);
 
         */
+    }
+
+    public void BackToMake()
+    {
+        Destroy(simulator.gameObject);
+        
+        RenderSettings.skybox = make_skybox;
+        generatorResource.SetActive(true);
+    }
+
+    public void BackToPlay()//??
+    {
+
     }
 
 

@@ -31,6 +31,7 @@ public class LoadingScene : MonoBehaviour
     public InputField nickname;
     public Text addAccountText;
     public GameObject accountPanel;
+
     public Button make_account_button;
     public Button play_button;
 
@@ -40,6 +41,8 @@ public class LoadingScene : MonoBehaviour
     AWSManager awsManager = AWSManager.instance;
     XMLManager xmlManager = XMLManager.ins;
     JsonAdapter jsonAdapter = JsonAdapter.instance;
+
+    public Button pressAnyButton;
 
     private void Awake()
     {
@@ -52,10 +55,14 @@ public class LoadingScene : MonoBehaviour
    
     void Start()
     {
+        //Debug.Log(PlayerPrefs.GetInt("tutorial", 0));
 
-        //PlayerPrefs.SetInt("tutorial",1);
-        //PlayerPrefs.SetInt("tutorial", IslandData.tutorial + 1);//튜토리얼 건너 뛰기
-
+        /*
+        //PlayerPrefs.SetInt("tutorial", 0);//튜토리얼 건너 뛰기
+        PlayerPrefs.SetInt("editorMake", 0);//튜토리얼 건너 뛰기
+        PlayerPrefs.SetInt("editorPlay", 0);//튜토리얼 건너 뛰기
+        PlayerPrefs.SetInt("editorLobby", 0);//튜토리얼 건너 뛰기
+        */
         awsManager = AWSManager.instance;
         xmlManager = XMLManager.ins;
         jsonAdapter = JsonAdapter.instance;
@@ -89,9 +96,9 @@ public class LoadingScene : MonoBehaviour
 
         if (playerPrefs_login == "none")//계정 생성하지 않았으면
         {
-
+            pressAnyButton.interactable = true;
             //facebook_login_button.gameObject.SetActive(true);
-            guest_login_button.gameObject.SetActive(true);
+            //guest_login_button.gameObject.SetActive(true);
         }
         else if (playerPrefs_login == "facebook")
         {
@@ -256,7 +263,17 @@ public class LoadingScene : MonoBehaviour
     }
 
    
-    
+    public void PressAnyButtonClicked()
+    {
+        if(PlayerPrefs.GetString("Login", "none") == "none")
+        {
+            SignUpGuest();
+        }
+        else
+        {
+            GameStart();
+        }
+    }
     
 
     public void GameStart()
@@ -373,12 +390,13 @@ public class LoadingScene : MonoBehaviour
                 Debug.Log("get all user data");
 
                 accountPanel.SetActive(false);
-                facebook_login_button.gameObject.SetActive(false);
-                guest_login_button.gameObject.SetActive(false);
+                //facebook_login_button.gameObject.SetActive(false);
+                //guest_login_button.gameObject.SetActive(false);
 
                 awsManager.Count_LogOut_Time();
                 awsManager.StartCoroutine(awsManager.StartTimer());
-                play_button.interactable = true;
+                //play_button.interactable = true;
+                pressAnyButton.interactable = true;
 
                 id.text = "UID : " + awsManager.userInfo.nickname;
             }

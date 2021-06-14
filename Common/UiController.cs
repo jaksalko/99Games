@@ -22,7 +22,7 @@ public class UiController : UIScript
     public GameObject[] parfaitOrder;
     public GameObject[] parfaitOrder_done;
 
-    public GameObject mission_default;
+    
     public GameObject mission_parfait;
 
     public StageSceneResultPopup stageSceneResultPopup;
@@ -68,6 +68,14 @@ public class UiController : UIScript
         player1.interactable = false;
         player2.interactable = true;
 
+        Color c = player2.GetComponent<Image>().color;
+        c.a = 0.4f;
+        player2.GetComponent<Image>().color = c;
+
+        c = player1.GetComponent<Image>().color;
+        c.a = 1f;
+        player1.GetComponent<Image>().color = c;
+
 
     }
 
@@ -81,14 +89,12 @@ public class UiController : UIScript
         //Default --> 종료 팝업 선택 버튼 : 다음 스테이지 / 로비로
         if (custom)
         {
-            customSceneResultPopup.ShowResultPopup(isSuccess, remain_snow, moveCount, star_count: star);
+            customSceneResultPopup.ShowResultPopup(isSuccess, remain_snow, moveCount, star_count: star, gameManager.retry);
         }
         else if(editor)
         {
             int level = (moveCount / 5) + 1;
             if (level > 5) level = 5;
-
-            
 
             editorSceneResultPopup.ShowResultPopup(moveCount, level);
         }
@@ -117,11 +123,24 @@ public class UiController : UIScript
         starSlider.SetSlider(star_list, maxValue);
         
     }
-    public void ParfaitDone()
+    public void ParfaitDone(int order)
     {
-        parfaitOrder[order].SetActive(false);
-        parfaitOrder_done[order].SetActive(true);
-        order++;
+        Debug.Log("done");
+        for(int i = 0; i < parfaitOrder.Length; i++)
+        {
+            if(i < order)
+            {
+                parfaitOrder[i].SetActive(false);
+                parfaitOrder_done[i].SetActive(true);
+            }
+            else
+            {
+                parfaitOrder[i].SetActive(true);
+                parfaitOrder_done[i].SetActive(false);
+            }
+        }
+        
+        
     }
     
     #endregion
@@ -173,6 +192,7 @@ public class UiController : UIScript
     public void GoLobby()
     {
         SceneManager.LoadScene("MainScene");
+        
     }
 
     public void Resume()
@@ -230,18 +250,29 @@ public class UiController : UIScript
 
             if(player == GameController.instance.player1)
             {
-                player1.interactable = false;
-                
-
+                player1.interactable = false;//1이 활성화된 캐릭터
                 player2.interactable = true;
-                
+
+                Color c = player2.GetComponent<Image>().color;
+                c.a = 0.4f;
+                player2.GetComponent<Image>().color = c;
+
+                c = player1.GetComponent<Image>().color;
+                c.a = 1f;
+                player1.GetComponent<Image>().color = c;
             }
             else
             {
                 player1.interactable = true;
-                
-
                 player2.interactable = false;
+
+                Color c = player1.GetComponent<Image>().color;
+                c.a = 0.4f;
+                player1.GetComponent<Image>().color = c;
+
+                c = player2.GetComponent<Image>().color;
+                c.a = 1f;
+                player2.GetComponent<Image>().color = c;
             }
             
         }

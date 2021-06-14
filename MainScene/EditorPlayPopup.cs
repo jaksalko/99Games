@@ -7,11 +7,10 @@ using System.Linq;
 
 public class EditorPlayPopup : UIScript
 {
+    public ToggleGroup toggleGroup;//orderby
+    public Toggle[] toggles;//where
 
-    public GameObject page;
-    public List<GameObject> pages;
-
-    public Transform pageContainer;
+    public RectTransform pageContainer;
 
     public InputField inputField;
     public Dropdown searchDropdown;
@@ -27,7 +26,12 @@ public class EditorPlayPopup : UIScript
 
     Sprite candy_off;
     Sprite candy_on;
+
+    int order_num = 0;
+    int page_max;
     int page_now;
+    [SerializeField]
+    float page_width;
     private void Start()
     {
         candy_off = Resources.Load<Sprite>("Editor/candy_off");
@@ -54,27 +58,13 @@ public class EditorPlayPopup : UIScript
     public void FirstPage()
     {
         page_now = 0;
-        for (int i = 0; i < pages.Count; i++)
-        {
-            if (page_now == i)
-                pages[i].SetActive(true);
-
-            else
-                pages[i].SetActive(false);
-        }
+        pageContainer.anchoredPosition = new Vector2(-page_width * page_now, pageContainer.anchoredPosition.y);
     }
 
     public void LastPage()
     {
-        page_now = pages.Count - 1;
-        for (int i = 0; i < pages.Count; i++)
-        {
-            if (page_now == i)
-                pages[i].SetActive(true);
-
-            else
-                pages[i].SetActive(false);
-        }
+        page_now = page_max;
+        pageContainer.anchoredPosition = new Vector2(-page_width * page_now, pageContainer.anchoredPosition.y);
 
     }
     
@@ -84,98 +74,22 @@ public class EditorPlayPopup : UIScript
         if (page_now != 0)
             page_now--;
 
-        for(int i = 0; i < pages.Count; i++)
-        {
-            if(page_now == i)
-                pages[i].SetActive(true);
-
-            else
-                pages[i].SetActive(false);
-        }
+        pageContainer.anchoredPosition = new Vector2(-page_width * page_now, pageContainer.anchoredPosition.y);
     }
 
     public void RightPage()
     {
-        if (page_now < pages.Count-1)
+        if (page_now < page_max)
             page_now++;
 
-        for (int i = 0; i < pages.Count; i++)
-        {
-            if (page_now == i)
-                pages[i].SetActive(true);
-
-            else
-                pages[i].SetActive(false);
-        }
+        pageContainer.anchoredPosition = new Vector2(-page_width * page_now, pageContainer.anchoredPosition.y);
     }
 
-    public void Search()
+    public void OrderbyToggleGroup(int toggle_num)
     {
-        
-        
-        editorMaps.Clear();
-        pages.Clear();
-        foreach (Transform page in pageContainer)
-        {
-            Destroy(page.gameObject);
-        }
+        order_num = toggle_num;
 
-        page_now = 0;
-
-        switch(searchDropdown.value)
-        {
-            case 0://맵이름
-                for(int i = 0; i < awsManager.editorMap.Count; i++)
-                {
-                    if(awsManager.editorMap[i].itemdata.title.Contains(inputField.text))
-                    {
-                        CustomMapItem copyItem = Instantiate(awsManager.editorMap[i]);
-                        editorMaps.Add(copyItem);
-                    }
-                }
-                break;
-            case 1://제작자
-                for (int i = 0; i < awsManager.editorMap.Count; i++)
-                {
-                    if (awsManager.editorMap[i].itemdata.maker.Contains(inputField.text))
-                    {
-                        CustomMapItem copyItem = Instantiate(awsManager.editorMap[i]);
-                        editorMaps.Add(copyItem);
-                    }
-                }
-                break;
-        }
-
-        Transform page_transform = page.transform;
-
-        for (int i = 0; i < editorMaps.Count; i++)
-        {
-
-            if(i%4 == 0)
-            {
-                GameObject newPage = Instantiate(page);
-                pages.Add(newPage);
-                page_transform = newPage.transform;
-                page_transform.SetParent(pageContainer,false);
-
-                if (i == 0)
-                {
-                    newPage.SetActive(true);
-                }
-                    
-            }
-
-            editorMaps[i].transform.SetParent(page_transform, false);
-        }
-    }
-
-    public void LevelButtonClicked()
-    {
-
-    }
-    public void SortButtonClicked(int sort_type)
-    {
-        switch(sort_type)
+        switch(order_num)
         {
             case 0:
                 editorMaps = editorMaps.OrderBy(x => x.itemdata.make_time).ToList();
@@ -187,39 +101,130 @@ public class EditorPlayPopup : UIScript
                 editorMaps = editorMaps.OrderBy(x => x.itemdata.likes).ToList();
                 break;
         }
-        
-        
-        
 
-    }
-
-
-    public void SetPage()
-    {
-
-    }
-
-    void MakeCustomeMapItem()
-    {
-        /*
-        Debug.Log("make map");
-        List<EditorMap> datas = XMLManager.ins.database
-
-        for (int i = 0; i < datas.Count ; i++)
+        foreach(CustomMapItem item in editorMaps)
         {
-            CustomMapItem newItem = Instantiate(item_prefab);
-            newItem.Initialize(datas[i]);
-            tabs[0].GetItem(newItem);
-
-            CustomMapItem levelItem = Instantiate(item_prefab);
-            levelItem.Initialize(datas[i]);
-            int level = datas[i].difficulty;
-            tabs[level].GetItem(levelItem);
-           
+            item.transform.SetAsFirstSibling();
         }
-        */
-       
+
+        page_now = 0;
+        pageContainer.anchoredPosition = new Vector2(-page_width * page_now, pageContainer.anchoredPosition.y);
+
+
     }
+
+    public void Search()
+    {
+        
+
+        foreach (CustomMapItem item in editorMaps)
+        {
+            Destroy(item.gameObject);
+        }
+        editorMaps.Clear();
+
+        
+
+        switch(searchDropdown.value)
+        {
+            case 0://맵이름
+                for(int i = 0; i < awsManager.editorMap.Count; i++)
+                {
+                    if(awsManager.editorMap[i].itemdata.title.Contains(inputField.text))
+                    {
+                        CustomMapItem copyItem = Instantiate(awsManager.editorMap[i]);
+                        editorMaps.Add(copyItem);
+                        copyItem.transform.SetParent(pageContainer,false);
+                    }
+                }
+                break;
+            case 1://제작자
+                for (int i = 0; i < awsManager.editorMap.Count; i++)
+                {
+                    if (awsManager.editorMap[i].itemdata.maker.Contains(inputField.text))
+                    {
+                        CustomMapItem copyItem = Instantiate(awsManager.editorMap[i]);
+                        editorMaps.Add(copyItem);
+                        copyItem.transform.SetParent(pageContainer,false);
+                    }
+                }
+                break;
+        }
+
+        FilteringItem();
+        OrderbyToggleGroup(order_num);
+        
+        
+    }
+
+    public void AllButtonClicked()
+    {
+        foreach(Toggle toggle in toggles)
+        {
+            toggle.isOn = true;
+            toggle.GetComponent<Image>().color = Color.white;
+        }
+
+        foreach(CustomMapItem item in  editorMaps)
+        {
+            item.gameObject.SetActive(true);
+        }
+    }
+
+    public void LevelButtonClicked(Toggle toggle)// 1 2 3 4 5
+    {
+        if (toggle.isOn)
+            toggle.GetComponent<Image>().color = Color.white;
+        else
+            toggle.GetComponent<Image>().color = Color.gray;
+
+
+        FilteringItem();
+    }
+
+    void FilteringItem()
+    {
+        for (int i = 0; i < toggles.Length; i++)
+        {
+            if (toggles[i].isOn)
+            {
+                List<CustomMapItem> on = editorMaps.Where(x => x.itemdata.level == i + 1).ToList();
+                foreach (CustomMapItem item in on)
+                {
+                    item.gameObject.SetActive(true);
+                }
+            }
+            else
+            {
+                List<CustomMapItem> off = editorMaps.Where(x => x.itemdata.level == i + 1).ToList();
+                foreach (CustomMapItem item in off)
+                {
+                    item.gameObject.SetActive(false);
+                }
+            }
+
+        }
+
+        int active_count = 0;
+        foreach (CustomMapItem item in editorMaps)
+        {
+            if (item)
+                if (item.gameObject.activeSelf)
+                    active_count++;
+        }
+
+        page_max = (active_count-1) / 4; // 0 ~ page_max
+        if (page_max < 0) page_max = 0;
+
+        page_now = 0;
+        Debug.Log("page max : " + page_max);
+        pageContainer.anchoredPosition = new Vector2(-page_width * page_now, pageContainer.anchoredPosition.y);
+
+    }
+    
+
+
+   
 
    
 }

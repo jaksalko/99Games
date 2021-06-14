@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BlockFactory : MonoBehaviour
 {
-    public static BlockFactory instance;
+    
 
     public GroundBlock groundBlockPrefab;
     public GroundBlock secondGroundBlockPrefab;
@@ -23,12 +23,7 @@ public class BlockFactory : MonoBehaviour
         //PlayerPrefs.DeleteAll();
 
 
-        if (instance == null)
-            instance = this;
-        else
-            Destroy(gameObject);
-
-        DontDestroyOnLoad(gameObject);//Dont destroy this singleton gameobject :(
+       
 
     }
 
@@ -42,12 +37,14 @@ public class BlockFactory : MonoBehaviour
         {
 
             newBlock = Instantiate(groundBlockPrefab, new Vector3(position.x, 0, position.y), groundBlockPrefab.transform.rotation);
+            
             newBlock.name = (int)position.x + "," + (int)position.y + " : " + blockNumber;
         }
         else if (BlockNumber.upperNormal == blockNumber)
         {
             
             newBlock = Instantiate(secondGroundBlockPrefab, new Vector3(position.x, 1, position.y), groundBlockPrefab.transform.rotation);
+            
         }
         else if (BlockNumber.obstacle == blockNumber)
         {
@@ -112,7 +109,10 @@ public class BlockFactory : MonoBehaviour
 
 
         newBlock.Init(blockNumber, style);
-
+        if(blockNumber == BlockNumber.normal || blockNumber == BlockNumber.upperNormal)
+        {
+            newBlock.GetComponent<GroundBlock>().snow.SetActive(false);
+        }
         return newBlock;
     }
 
@@ -132,14 +132,18 @@ public class BlockFactory : MonoBehaviour
             height = 2;
             Block underBlock = Instantiate(groundBlockPrefab, new Vector3(position.x, 0, position.y), groundBlockPrefab.transform.rotation);
             underBlock.Init(blockNumber, styles[0]);
+            underBlock.transform.SetParent(transform);
+
             underBlock = Instantiate(secondGroundBlockPrefab, new Vector3(position.x, 1, position.y), groundBlockPrefab.transform.rotation);
             underBlock.Init(blockNumber, styles[1]);
+            underBlock.transform.SetParent(transform);
         }
         else if(blockNumber >= BlockNumber.upperNormal)//2층 하단 블럭
         {
             height = 1;
             Block underBlock = Instantiate(groundBlockPrefab, new Vector3(position.x, 0, position.y), groundBlockPrefab.transform.rotation);
             underBlock.Init(blockNumber, styles[0]);
+            underBlock.transform.SetParent(transform);
         }
 
 
@@ -232,12 +236,20 @@ public class BlockFactory : MonoBehaviour
             newBlock = null;
         }
 
-        
 
+        newBlock.transform.SetParent(transform);
         Debug.Log(styles[styles.Count - 1]);
         newBlock.Init(blockNumber, styles[height]);
 
         return newBlock;
+    }
+
+    public void DestroyBlock()
+    {
+        foreach (Transform child in transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
     }
         
 }

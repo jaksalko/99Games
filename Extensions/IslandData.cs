@@ -15,6 +15,7 @@ public class IslandData
 
     public int lastLevel;//13
     public int[] island_last;
+    public int[] island_start;
 
     public int Island_Num(int stage)
     {
@@ -42,6 +43,7 @@ public class IslandData
         lastLevel = cottoncandy;
 
         island_last = new int[] { tutorial, icecream, beach, cracker, cottoncandy };
+        island_start = new int[] { 0, tutorial + 1, icecream + 1, beach + 1, cracker + 1 };
     }
    
 }

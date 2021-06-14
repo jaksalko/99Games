@@ -33,6 +33,8 @@ public class StagePopup : UIScript
         moveText.text = map.star_limit[2].ToString();
         snowText.text = map.total_snow.ToString();
 
+        stageImage.sprite = Resources.Load<Sprite>("Stage/" + stage_num);
+
     }
 
     public void ExitButtonClicked()

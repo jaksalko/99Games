@@ -20,12 +20,14 @@ public class Block : MonoBehaviour , IBlock
     public GameObject[] object_styles;
 
     public int data { get; set; }
+    public bool isClear = true;
     
 
     public virtual void Init(int block_num , int style)
     {
         data = block_num;
         this.style = style;
+        isClear = true;
 
         if (data == BlockNumber.normal || data == BlockNumber.upperNormal)
         {

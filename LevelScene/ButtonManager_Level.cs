@@ -15,7 +15,7 @@ public class ButtonManager_Level : UIScript
 	public Sprite clearSelect;
 	public Sprite nonclearSelect;
 	private int highLevel;
-	public GameObject tutorialManager;
+	public TutorialManager tutorialManager;
 
 	public RectTransform content; //2160~-2160
 	public Transform[] stageScrollView;
@@ -66,9 +66,9 @@ public class ButtonManager_Level : UIScript
 			}
         }
 
-		if(PlayerPrefs.GetInt("tutorial",0) == 1)
+		if(PlayerPrefs.GetInt("tutorial",0) == 2)
 		{
-			tutorialManager.SetActive(true);
+			tutorialManager.StartTutorial();
 		}
 
 

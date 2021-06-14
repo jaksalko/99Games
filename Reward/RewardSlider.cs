@@ -16,7 +16,7 @@ public class RewardSlider : MonoBehaviour
 
     // Start is called before the first frame update
 
-
+    public GameObject[] rewardEffect;
 
     //섬 번호 //해당 섬에서의 별 최대 값 //유저의 보유 별의 개수 // 해당 섬에서 얻을 수 있는 보상(3개)
     public void SetSlider(int island_num, int maxValue , int userValue , List<Reward> rewards)//Initialize Slider
@@ -38,19 +38,23 @@ public class RewardSlider : MonoBehaviour
 
 
             if (userValue < frequency)//아직 도달하지 못함
-            { 
-                rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i+1)*20) + "_none");
+            {
+                rewardEffect[i].SetActive(false);
+                rewardImages[i].gameObject.GetComponent<Button>().interactable = false;
+                //rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i+1)*20) + "_none");
             }
             else//보상을 받을 수 있음
             {
                 if(AWSManager.instance.userReward.Exists(x => x.reward_num == reward_num))
                 {
-                    rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_done");
+                    rewardEffect[i].SetActive(false);
+                    //rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_done");
                     rewardImages[i].gameObject.GetComponent<Button>().interactable = false;
                 }
                 else
                 {
-                    rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_reward");
+                    rewardEffect[i].SetActive(true);
+                    //rewardImages[i].sprite = Resources.Load<Sprite>("Reward/Number/" + ((i + 1) * 20) + "_reward");
                     rewardImages[i].gameObject.GetComponent<Button>().interactable = true;
                 }
                 
@@ -64,8 +68,9 @@ public class RewardSlider : MonoBehaviour
     //Button Clicked
     public void GetReward(int index)// 4 7 10 Text(or Image) 에서 가능 index 값 012
     {
+        rewardEffect[index].SetActive(false);
         rewardImages[index].gameObject.GetComponent<Button>().interactable = false;
-        rewardImages[index].sprite = Resources.Load<Sprite>("Reward/Number/" + ((index + 1) * 20) + "_done");
+        //rewardImages[index].sprite = Resources.Load<Sprite>("Reward/Number/" + ((index + 1) * 20) + "_done");
 
         
         Debug.Log("reward index : " + index + " reward quan : " + island_rewards[index].rewardItems.Count);

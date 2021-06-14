@@ -20,9 +20,12 @@ public class CustomMapItem : MonoBehaviour
     public EditorMap itemdata;
     public Map map;
     public bool isPlayed;
+
+    public Sprite minable;
+    public Sprite unminable;
     public void Initialize(EditorMap item)
     {
-        
+        SetMining(false);
         name = item.title;
         itemdata = item;
         title.text = itemdata.title;
@@ -86,6 +89,15 @@ public class CustomMapItem : MonoBehaviour
         
     }
 
+    public void SetMining(bool played)
+    {
+        isPlayed = played;
+        if (isPlayed)
+            isClear.sprite = unminable;
+        else
+            isClear.sprite = minable;
+    }
+
     public void PlayButton()
     {
         AWSManager aws = AWSManager.instance;
@@ -95,6 +107,9 @@ public class CustomMapItem : MonoBehaviour
             if(aws.editorMap[i].itemdata.title == itemdata.title)
             {
                 GameManager.instance.customMap = aws.editorMap[i].map;
+                GameManager.instance.playCustomData = itemdata;
+                
+                GameManager.instance.retry = isPlayed;
                 SceneManager.LoadScene("CustomMapPlayScene");//customMode Scene
                 break;
             }

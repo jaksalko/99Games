@@ -12,7 +12,7 @@ public class MapLoader : MonoBehaviour
 
     //public int[,] map; // sampleMap에 있음
     //public bool[,] check; // 생성하며 구현
-    BlockFactory blockFactory;
+    public BlockFactory blockFactory;
     int style;
 
     [Header("Block Type")]
@@ -101,7 +101,7 @@ public class MapLoader : MonoBehaviour
     
     void MakeGround(int mapsizeH, int mapsizeW)
     {
-        blockFactory = BlockFactory.instance;
+        
 
 
         for (int i = 0; i < mapsizeH; i++)
@@ -124,7 +124,7 @@ public class MapLoader : MonoBehaviour
                 int style_num = i * mapsizeW + j;
                 Block newBlock = blockFactory.CreateBlock(data, liveMap.styles[style_num], new Vector2(j, i));
                 //Debug.Log(j + "," + i + " : " + newBlock.data);
-
+                //newBlock.transform.SetParent(groundParent);
 
                 liveMap.SetBlocks(j, i, newBlock);
                 if (newBlock.data == BlockNumber.normal || newBlock.data == BlockNumber.upperNormal)

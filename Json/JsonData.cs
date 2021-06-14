@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 [Serializable]
 public class UserInfo
@@ -308,7 +310,8 @@ public class UserFriend
 [Serializable]
 public class EditorMap
 {
-    public string map_id;
+    public string map_id;//nickname + title // 같은 닉네임으로 같은 타이틀 제작 금지
+    public int map_no;//난수 생성 // 중복 금
     public string maker;
     public string title;
     public string make_time;
@@ -329,7 +332,7 @@ public class EditorMap
 
     public EditorMap(Map map,string nick , int moveCount)
     {
-        map_id = nick + DateTime.Now.ToString("yyyyMMddHHmmss");
+        map_id = nick + map.map_title;
         maker = nick;
         title = map.map_title;
         make_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -346,7 +349,35 @@ public class EditorMap
         level = move / 5 + 1;
         if (level > 5) level = 5;
 
+        List<CustomMapItem> maps = AWSManager.instance.editorMap;
+        int ran = UnityEngine.Random.Range(10000000, 99999999);
+        bool uniq = false;
+        while(!uniq)
+        {
+            uniq = true;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                if (ran == maps[i].itemdata.map_no)
+                {
+                    ran = UnityEngine.Random.Range(10000000, 99999999);
+                    uniq = false;
+                    break;
+                }
+            }
 
+        }
+
+        map_no = ran;
+        
+
+    }
+
+    public EditorMap DeepCopy()
+    {
+        EditorMap copy = new EditorMap();
+
+
+        return copy;
     }
 }
 

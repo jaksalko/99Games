@@ -8,6 +8,20 @@ using Amazon.CognitoIdentity;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 
+
+class InfoHistory
+{
+    public UserInfo userInfo;
+    public UserHistory userHistory;
+
+    
+
+    public InfoHistory(UserInfo i, UserHistory h)
+    {
+        userInfo = i;
+        userHistory = h;
+    }
+}
 /*
 [DynamoDBTable("PingPengBoong")]
 public class PingPengBoong
@@ -117,7 +131,7 @@ public class AWSManager : MonoBehaviour
     public UserInfo userInfo;
     public UserHistory userHistory;
 
-
+    public List<UserStage> userEditorStage;
     public List<UserReward> userReward;
     public List<UserStage> userStage;
     public List<UserInventory> userInventory;
@@ -201,8 +215,8 @@ public class AWSManager : MonoBehaviour
                     {
                         break;
                     }
-                    jsonAdapter.UpdateData(userInfo, "userInfo", SaveDataCallback);
-                    jsonAdapter.UpdateData(userHistory, "userHistory", SaveDataCallback);
+                    jsonAdapter.UpdateData(new InfoHistory(userInfo,userHistory), "infoHistory", SaveDataCallback);
+                    
                 }
             }
         }
@@ -230,8 +244,8 @@ public class AWSManager : MonoBehaviour
                 {
                     userInfo.heart++;
                     userInfo.heart_time = 600;
-                    jsonAdapter.UpdateData(userInfo, "userInfo", SaveDataCallback);
-                    jsonAdapter.UpdateData(userHistory, "userHistory", SaveDataCallback);
+                    jsonAdapter.UpdateData(new InfoHistory(userInfo, userHistory), "infoHistory", SaveDataCallback);
+                    
                     //XMLManager.ins.SaveItems();
 
                 }
@@ -273,9 +287,10 @@ public class AWSManager : MonoBehaviour
 
     void SaveData()
     {
+        InfoHistory infoHistory = new InfoHistory(userInfo, userHistory);
         userInfo.log_out = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        jsonAdapter.UpdateData(userInfo, "userInfo",SaveDataCallback);
-        jsonAdapter.UpdateData(userHistory, "userHistory",SaveDataCallback);
+        jsonAdapter.UpdateData(infoHistory, "infoHistory",SaveDataCallback);
+        
     }
 
     void SaveDataCallback(bool success)

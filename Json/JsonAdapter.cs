@@ -7,15 +7,18 @@ using System.Linq;
 
 public class JsonAdapter : MonoBehaviour
 {
-    class UserAccount
+    class UserAccountCreate
     {
         public UserInfo userInfo;
         public UserHistory userHistory;
-
-        public UserAccount(UserInfo i , UserHistory h)
+        public UserInventory item1;
+        public UserInventory item2;
+        public UserAccountCreate(UserInfo i , UserHistory h, UserInventory item1, UserInventory item2)
         {
             userInfo = i;
             userHistory = h;
+            this.item1 = item1;
+            this.item2 = item2;
         }
     }
 
@@ -61,6 +64,8 @@ public class JsonAdapter : MonoBehaviour
 
 
     }
+
+   
 
     public static JsonAdapter instance = null;
 
@@ -172,7 +177,7 @@ public class JsonAdapter : MonoBehaviour
             if (connect)
             {
                 //성공알림
-                Debug.Log("success create account");
+                Debug.Log("success insert get reward");
 
                 Debug.Log(response);
                 callback(true);
@@ -186,8 +191,14 @@ public class JsonAdapter : MonoBehaviour
         }));
     }
 
+    
+    
+
     public void GetAllUserData(string nickname,BooleanCallback callback)
     {
+        CSVManager csvManager = CSVManager.instance;
+        AWSManager awsManager = AWSManager.instance;
+
         StartCoroutine(API_GET("getall/get?nickname="+nickname, (connect, response) =>
         {
             if (connect)
@@ -198,19 +209,45 @@ public class JsonAdapter : MonoBehaviour
 
                 string fixData = JsonHelper.fixJson(fixDatas[0]);
                 UserInfo[] userInfos = JsonHelper.FromJson<UserInfo>(fixData);
-                AWSManager.instance.userInfo = userInfos[0];
+                awsManager.userInfo = userInfos[0];
 
                 fixData = JsonHelper.fixJson(fixDatas[1]);
                 UserHistory[] userHistory = JsonHelper.FromJson<UserHistory>(fixData);
-                AWSManager.instance.userHistory = userHistory[0];
+                awsManager.userHistory = userHistory[0];
 
                 fixData = JsonHelper.fixJson(fixDatas[2]);
                 UserStage[] userStages = JsonHelper.FromJson<UserStage>(fixData);
-                AWSManager.instance.userStage = userStages.ToList();
+                List<UserStage> islandStage = new List<UserStage>();
+                List<UserStage> editorStage = new List<UserStage>();
+                for(int i = 0; i < userStages.Length; i++)
+                {
+                    if(userStages[i].stage_num < 10000000)
+                    {
+                        islandStage.Add(userStages[i]);
+                    }
+                    else
+                    {
+                        editorStage.Add(userStages[i]);
+                        CustomMapItem item = AWSManager.instance.editorMap.Find(x => x.itemdata.map_no == userStages[i].stage_num);
+                        if(item != null)
+                            item.SetMining(true);
+                    }
+                }
+
+                awsManager.userStage = islandStage.OrderBy(x => x.stage_num).ToList();
+                awsManager.userEditorStage = editorStage.OrderBy(x => x.stage_clear_time).ToList();
 
                 fixData = JsonHelper.fixJson(fixDatas[3]);
                 UserInventory[] userInventories = JsonHelper.FromJson<UserInventory>(fixData);
-                AWSManager.instance.userInventory = userInventories.ToList();
+                for(int i = 0; i < userInventories.Length; i++)
+                {
+                    Skin skin = csvManager.skins.Find(x => x.skinName == userInventories[i].item_name);
+                    skin.inPossession = true;
+                    skin.skin_get_time = DateTime.ParseExact(userInventories[i].time_get, "yyyy-MM-dd HH:mm:ss", null);
+
+                
+                }
+                awsManager.userInventory = userInventories.ToList();
 
                 fixData = JsonHelper.fixJson(fixDatas[4]);
                 UserFriend[] userFriends = JsonHelper.FromJson<UserFriend>(fixData);
@@ -226,15 +263,15 @@ public class JsonAdapter : MonoBehaviour
                     
                 }
 
-                AWSManager.instance.userFriend = userFriends.ToList();
+                awsManager.userFriend = userFriends.ToList();
 
                 fixData = JsonHelper.fixJson(fixDatas[5]);
                 UserReward[] userRewards = JsonHelper.FromJson<UserReward>(fixData);
-                AWSManager.instance.userReward = userRewards.ToList();
+                awsManager.userReward = userRewards.ToList();
 
                 fixData = JsonHelper.fixJson(fixDatas[6]);
                 Mailbox[] mailbox = JsonHelper.FromJson<Mailbox>(fixData);
-                AWSManager.instance.mailbox = mailbox.ToList();
+                awsManager.mailbox = mailbox.ToList();
 
 
 
@@ -256,8 +293,10 @@ public class JsonAdapter : MonoBehaviour
 
         UserInfo userInfo = new UserInfo(nickname, facebook);
         UserHistory userHistory = new UserHistory(nickname);
+        UserInventory skin0 = new UserInventory(nickname,CSVManager.instance.skins[0].skinName);
+        UserInventory skin1 = new UserInventory(nickname, CSVManager.instance.skins[1].skinName);
+        UserAccountCreate userAccount = new UserAccountCreate(userInfo,userHistory,skin0,skin1);
 
-        UserAccount userAccount = new UserAccount(userInfo,userHistory);
 
         var json = JsonUtility.ToJson(userAccount);
 

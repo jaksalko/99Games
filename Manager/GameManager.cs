@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     public string id; // id == user.id
 
     public int infiniteLevel;
-    public Map customMap;
+    
     public Vector2 maxSize;
 
     public int nowLevel;
@@ -28,7 +28,10 @@ public class GameManager : MonoBehaviour
     public GameObject canvas;
 
     //public List<JsonData> customMapdatas = new List<JsonData>();
-    public CustomMapItem playCustomData;
+    public EditorMap playCustomData;
+    public CustomMapItem customItem;
+    public Map customMap;
+    public bool retry;
 
     AWSManager awsManager = AWSManager.instance;
     XMLManager xmlManager = XMLManager.ins;

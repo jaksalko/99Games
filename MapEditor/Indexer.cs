@@ -160,7 +160,8 @@ public class Indexer : MonoBehaviour
                 rotateBlock.data = BlockNumber.upperCloudUp;
         }//25 ~ 28
 
-        rotateBlock.transform.rotation = Quaternion.Euler(new Vector3(0, 90*(rotateBlock.data - BlockNumber.slopeUp), 0));
+
+        rotateBlock.transform.Rotate(new Vector3(0, 90, 0));
     }
 
     public void EraseBlock()

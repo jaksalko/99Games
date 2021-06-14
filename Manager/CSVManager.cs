@@ -13,8 +13,8 @@ public class CSVManager : MonoBehaviour
     public List<Island> islands = new List<Island>();
     public List<Rewards> rewards = new List<Rewards>();
 
-    public List<SkinItem> skinItems = new List<SkinItem>();
-    public SkinItem skinItemPrefab;
+    public List<Skin> skins = new List<Skin>();
+    
 
     public List<BlockPiece> blockPieces = new List<BlockPiece>();
     public BlockPiece blockPiecePrefab;
@@ -56,16 +56,17 @@ public class CSVManager : MonoBehaviour
         }
         DontDestroyOnLoad(gameObject);//Dont destroy this singleton gameobject :(
 
-
-    }
-    void Start()
-    {
         GetStyleList();
         SetRewardList();
         SetIslandList();
 
-        //GetSkinItemData();
+        GetSkinItemData();
         GetBlockItemData();
+
+    }
+    void Start()
+    {
+        
 
 
     }
@@ -95,21 +96,35 @@ public class CSVManager : MonoBehaviour
     public void GetSkinItemData()
     {
         List<Dictionary<string, object>> item = CSVReader.Read("item");
-
+        int skin_num = 0;
         for (int i = 0; i < item.Count; i++)
         {
             string type = item[i]["type"].ToString();
+            
+            Debug.Log(type);
             if (type == "skin")
             {
-                string name = item[i]["name"].ToString();
+                string name_ = item[i]["name"].ToString();
                 string info = item[i]["info"].ToString();
                 int boong = int.Parse(item[i]["boong"].ToString());
                 int skin_powder = int.Parse(item[i]["skin_powder"].ToString());
                 string path = item[i]["path"].ToString();
 
+                Skin skin = new Skin(name_, info, path, boong, skin_powder, 0,skin_num);
+                skins.Add(skin);
+                skin_num++;
+                /*
+                Debug.Log(name_ +" " + path);
                 SkinItem skinItem = Instantiate(skinItemPrefab);
-                skinItem.Initialize(name, info, boong, skin_powder, path);
+                MyIglooSkinItem myIglooSkinItem = Instantiate(myIglooSkinItemPrefab);
+                myIglooSkinItem.InitializeItem(name_, info, path);
+                myIglooSkinItems.Add(myIglooSkinItem);
+                skinItem.Initialize(name_, info, boong, skin_powder, path);
                 skinItems.Add(skinItem);
+
+                myIglooSkinItem.transform.SetParent(transform, false);
+                skinItem.transform.SetParent(transform, false);
+                */
             }
         }
     }
@@ -180,7 +195,7 @@ public class CSVManager : MonoBehaviour
             
         }
 
-        islandData = new IslandData(islands[0].maps.Count,
+        islandData = new IslandData(islands[0].maps.Count-1,
             islands[1].maps.Count,
             islands[2].maps.Count,
             islands[3].maps.Count,

@@ -76,19 +76,13 @@ public class Island : MonoBehaviour
 
     void SetSlider()
     {
-        int stage_num = csvManager.islands[island].maps.Count;//섬의 맵 개수
+        int stage_num = csvManager.islands[island].maps.Count;
 
         int maxValue = stage_num * 3;//별의 최대 개수 = 맵 개수 *3
         int userValue = 0; //해당 스테이지에서 유저가 가지고 있는 
 
-        int island_start_num = 0; //스테이지의 시작번호
-
-        if (island != 0)
-            island_start_num = csvManager.islandData.island_last[island - 1] + 1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
-        else
-            island_start_num = 0;
-
-        for (int i = island_start_num; i < user_stage; i++)//섬의 시작 번호부터 유저 스테이지의 전까지 맵에서 유저가 얻은 별의 갯수를 합침
+ 
+        for (int i = csvManager.islandData.island_start[island]; i < user_stage; i++)//섬의 시작 번호부터 유저 스테이지의 전까지 맵에서 유저가 얻은 별의 갯수를 합침
         {
             userValue += awsManager.userStage[i].stage_star;
         }
@@ -100,12 +94,6 @@ public class Island : MonoBehaviour
     void SetLevelSceneIsland()
     {
         int stage_num = csvManager.islands[island].maps.Count;
-        
-
-        int island_start_num = 0;
-
-        if(island != 0 )
-            island_start_num = csvManager.islandData.island_last[island-1]+1;//전 섬의 마지막 스테이지 번호 다음부터 시작을 의미
 
         int maxValue = stage_num * 3;
         int userValue = 0;
@@ -115,7 +103,7 @@ public class Island : MonoBehaviour
             medal.SetActive(false);
             island_image.sprite = Resources.Load<Sprite>("LevelScene/island_" + island + "_none");
 
-            for (int i = island_start_num ; i < user_stage; i++)
+            for (int i = csvManager.islandData.island_start[island]; i < user_stage; i++)
             {
                 userValue += awsManager.userStage[i].stage_star;
             }
@@ -126,7 +114,7 @@ public class Island : MonoBehaviour
             island_image.sprite = Resources.Load<Sprite>("LevelScene/island_"+island+"_clear");
 
 
-            for (int i = island_start_num ; i <= csvManager.islandData.island_last[island] ; i++)
+            for (int i = csvManager.islandData.island_start[island]; i <= csvManager.islandData.island_last[island] ; i++)
             {
                 userValue += awsManager.userStage[i].stage_star;
             }

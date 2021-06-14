@@ -6,7 +6,17 @@ using UnityEngine.SceneManagement;
 
 public class MainSceneUIScript : UIScript
 {
+	class StartStage
+    {
+		public UserInfo userInfo;
+		public UserHistory userHistory;
 
+		public StartStage(UserInfo i , UserHistory h)
+        {
+			userInfo = i;
+			userHistory = h;
+        }
+    }
 	public GameObject EditorPlayPopup;
 
 	public Button playButton;
@@ -19,7 +29,7 @@ public class MainSceneUIScript : UIScript
 
 	
 	SoundManager soundManager = SoundManager.instance;
-	public GameObject tutorialManager;
+	public TutorialManager tutorialManager;
 
 	public GameObject heartAnimation;
 	public Image fader;
@@ -41,6 +51,7 @@ public class MainSceneUIScript : UIScript
 	public ProfilePopup profilePopup;
 	public Gatcha gatcha;
 	public Store store;
+	public MyIgloo myIgloo;
 
 	public GameObject comingsoonPanel;
 	public GameObject snowEffect;
@@ -62,11 +73,11 @@ public class MainSceneUIScript : UIScript
 
 		if (PlayerPrefs.GetInt("tutorial", 0) == 0)//처음
 		{
-			tutorialManager.SetActive(true);
+			tutorialManager.StartTutorial();
 		}
 		else if (PlayerPrefs.GetInt("tutorial", 0) == 1)//튜토리얼 스테이지 끝
 		{
-			tutorialManager.SetActive(true);
+			tutorialManager.StartTutorial();
 		}
 	}
 
@@ -144,6 +155,11 @@ public class MainSceneUIScript : UIScript
 				button.SetActive(false);
             }
 			targetPosition  = Vector3.right * (-1080) * 6;
+
+			if(PlayerPrefs.GetInt("editorPlay", 0) == 0)
+            {
+				tutorialManager.StartTutorial();
+            }
 		}
 		else
         {
@@ -196,6 +212,12 @@ public class MainSceneUIScript : UIScript
 		{
 			targetPosition = Vector3.right * (-1080) * 5;
 			snowEffect.SetActive(false);
+
+
+			if (PlayerPrefs.GetInt("editorLobby", 0) == 0)
+			{
+				tutorialManager.StartTutorial();
+			}
 
 		}
 		else
@@ -260,21 +282,24 @@ public class MainSceneUIScript : UIScript
     }
 	public void MyEglooButtonClicked()
 	{
-		StartCoroutine(comingsoonPanelActivate());
+		gatcha.gameObject.SetActive(false);
+		store.gameObject.SetActive(false);
+		myIgloo.gameObject.SetActive(true);
+		//StartCoroutine(comingsoonPanelActivate());
 	}
 
 	public void StoreButtonClicked()
 	{
-		StartCoroutine(comingsoonPanelActivate());
-		/*
+		//StartCoroutine(comingsoonPanelActivate());
+		
 		foreach (GameObject button in lowerButtons)
 		{
 			button.SetActive(true);
 		}
-
+		myIgloo.gameObject.SetActive(false);
 		gatcha.gameObject.SetActive(false);
 		store.gameObject.SetActive(true);
-		*/
+		
 	}
 
 	public void GatchaButtonClicked()
@@ -311,10 +336,13 @@ public class MainSceneUIScript : UIScript
 
 	public void PressPlayBtn()
 	{
-		awsManager.userInfo.heart--;
-		awsManager.userHistory.heart_use++;
-		jsonAdapter.UpdateData(awsManager.userInfo, "userInfo", PlayButtonCallback);
-		jsonAdapter.UpdateData(awsManager.userHistory, "userHistory", PlayButtonCallback);
+		UserInfo copyInfo = awsManager.userInfo.DeepCopy();
+		UserHistory copyHistory = awsManager.userHistory.DeepCopy();
+		StartStage startStage = new StartStage(copyInfo, copyHistory);
+		copyInfo.heart--;
+		copyHistory.heart_use++;
+		jsonAdapter.UpdateData(startStage, "infoHistory", PlayButtonCallback);
+		
 	}
 
 	void PlayButtonCallback(bool success)
@@ -323,19 +351,36 @@ public class MainSceneUIScript : UIScript
 		{
 			if (jsonAdapter.EndLoading())
 			{
+				jsonAdapter.GetAllUserData(awsManager.userInfo.nickname,StartGame);
+
+				
+			}
+		}
+		else
+		{
+			
+		}
+	}
+
+	void StartGame(bool success)
+    {
+		if (success)
+		{
+			if (jsonAdapter.EndLoading())
+			{
 				GameManager.instance.nowLevel = awsManager.userInfo.stage_current;
-				if(PlayerPrefs.GetInt("tutorial") == 0)
-                {
+				if (PlayerPrefs.GetInt("tutorial") == 0)
+				{
 					GameManager.instance.nowLevel = 0;
 
 				}
+
 				StartCoroutine(GameStart());
 			}
 		}
 		else
 		{
-			awsManager.userInfo.heart++;
-			awsManager.userHistory.heart_use--;
+			
 		}
 	}
 }

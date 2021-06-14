@@ -10,7 +10,9 @@ public class GroundBlock : Block
 	
     public override void Init(int block_num, int style)
     {
+        
         base.Init(block_num, style);
+        isClear = false;
         object_styles[style].SetActive(true);
         SetSnow();
     }

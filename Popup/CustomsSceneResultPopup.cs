@@ -10,7 +10,7 @@ public class CustomsSceneResultPopup : UIScript
 {
     public TextMeshProUGUI moveCount;
     public TextMeshProUGUI snowCount;
-    public TextMeshProUGUI stageText;
+    public Text stageText;
 
     public Image[] starImage;
 
@@ -18,10 +18,14 @@ public class CustomsSceneResultPopup : UIScript
     public GameObject failPopup;
     public GameObject successEffect;
 
+    public Button likeButton;
 
-
-    public void ShowResultPopup(bool isSuccess, int remain_snow, int move_count, int star_count)
+    public void ShowResultPopup(bool isSuccess, int remain_snow, int move_count, int star_count, bool retry)
     {
+        if (retry)
+            likeButton.gameObject.SetActive(false);
+        else
+            likeButton.gameObject.SetActive(true);
 
         stageText.text = gameManager.customMap.map_title;
 
@@ -56,8 +60,10 @@ public class CustomsSceneResultPopup : UIScript
 
 
 
-    public void PushButtonClicked()
+    public void LikeButtonClicked()
     {
+        
+        jsonAdapter.UpdateData(gameManager.playCustomData, "editorMap/like", UpdateEditorMapCallback);
         /*
         JsonData jsonData = GameManager.instance.playCustomData.itemdata;
 
@@ -68,5 +74,26 @@ public class CustomsSceneResultPopup : UIScript
         //map push++
         //candy++
         //show ad...
+    }
+
+    void UpdateEditorMapCallback(bool success)
+    {
+        if (success)
+        {
+            if (jsonAdapter.EndLoading())
+            {
+                likeButton.interactable = false;
+                gameManager.playCustomData.likes++;
+                
+                    CustomMapItem map = awsManager.editorMap.Find(x => x.itemdata.map_id == GameManager.instance.playCustomData.map_id);
+                    map.itemdata = GameManager.instance.playCustomData;
+                map.likes.text = map.itemdata.likes.ToString();
+            }
+
+        }
+        else
+        {
+            Debug.LogError("fail like button");
+        }
     }
 }

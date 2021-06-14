@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
 public class Store : MonoBehaviour
 {
     public Button[] tapButton; // skin block boong heart
     public GameObject[] storeView;
-
+    public GameObject[] powders;
 
     private void Awake()
     {
@@ -22,11 +21,13 @@ public class Store : MonoBehaviour
             {
                 tapButton[i].interactable = false;
                 storeView[i].SetActive(true);
+                powders[i].SetActive(true);
             }                
             else
             {
                 tapButton[i].interactable = true;
                 storeView[i].SetActive(false);
+                powders[i].SetActive(false);
             }
                 
 
