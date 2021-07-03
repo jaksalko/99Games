@@ -762,7 +762,7 @@ public class MapGenerator : MonoBehaviour
         
 
 
-        newMap.Initialize(new Vector2(height, width), isParfait, positionA, positionB, datas, styles, new List<int>() {100,200,300});
+        newMap.Initialize(new Vector2Int(height, width), isParfait, positionA, positionB, datas, styles, new List<int>() {100,200,300});
         Debug.Log("width : " + width_min + "," + width_max + "  height : " + height_min + "," + height_max);
         Debug.Log("width length : " + width + " height length : " + height);
     }

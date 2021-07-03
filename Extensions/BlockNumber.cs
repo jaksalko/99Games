@@ -33,17 +33,21 @@ static class BlockNumber
         upperParfaitA = 31, upperParfaitB = 32, upperParfaitC = 33, upperParfaitD = 34,
         upperObstacle = 39;
 
+    public static int[] allObstacleBlocks = { 1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,25,26,27,28,29,39};
+    public static int[] slopeBlocks = { 25, 26, 27, 28};
+    public static int[] cloudBlocks = { 1, 2, 3, 4, 11, 12, 13, 14 };
+    public static int[] parfaitBlocks = { 21, 22, 23, 24, 31, 32, 33, 34 };
 
-    public static int[] first_floor = new int[] { normal, cloudUp, cloudRight, cloudLeft, cloudDown, cracker_0, cracker_1, cracker_2 };
-    public static int[] second_floor = new int[] { upperNormal, upperCloudUp, upperCloudRight, upperCloudLeft, upperCloudDown, upperCracker_0, upperCracker_1, upperCracker_2, slopeUp,slopeRight,slopeDown,slopeLeft,parfaitA,parfaitB,parfaitC,parfaitD,character,obstacle };
-    public static int[] third_floor = new int[] { upperCharacter, upperObstacle, upperParfaitA, upperParfaitB, upperParfaitC, upperParfaitD };
+    public static int[] first_floor = { normal, cloudUp, cloudRight, cloudLeft, cloudDown, cracker_0, cracker_1, cracker_2 };
+    public static int[] second_floor = { upperNormal, upperCloudUp, upperCloudRight, upperCloudLeft, upperCloudDown, upperCracker_0, upperCracker_1, upperCracker_2, slopeUp,slopeRight,slopeDown,slopeLeft,parfaitA,parfaitB,parfaitC,parfaitD,character,obstacle };
+    public static int[] third_floor = { upperCharacter, upperObstacle, upperParfaitA, upperParfaitB, upperParfaitC, upperParfaitD };
 
 
     public static int[] firstlevel = new int[4] { normal, cracker_0, cracker_1, cracker_2 };
     public static int[] secondLevel = new int[4] { upperNormal, upperCracker_0, upperCracker_1, upperCracker_2 };
     public static int[] slopeLevel = new int[4] { slopeUp, slopeRight, slopeDown, slopeLeft };
 
-    public static List<int> GetThirdFloorThroughBlock(int dir, bool onCloud)
+    public static List<int> GetThirdFloorThroughBlock(int dir)
     {
         List<int> throughBlockList = new List<int>();
 
@@ -59,9 +63,9 @@ static class BlockNumber
         return throughBlockList;
     }
 
-    public static List<int> GetUpstairThroughBlock(int dir, bool onCloud)
+    public static List<int> GetUpstairThroughBlock(int parfaitOrder,int dir, bool onCloud)
     {
-        int parfaitOrder = GameController.ParfaitOrder;
+       
         List<int> throughBlockList = new List<int>();
 
         if(!onCloud)
@@ -102,9 +106,24 @@ static class BlockNumber
 
         return throughBlockList;
     }
-    public static List<int> GetDownstairThroughBlock(int dir, bool onCloud)
+
+    public static int GetFloorGap(int playerFloor, int blockData)
     {
-        int parfaitOrder = GameController.ParfaitOrder;
+        
+        int blockFloor; // 파르페 21 ~  31~
+
+        if (blockData < upperNormal) blockFloor = 1;
+        else if (blockData < upperCharacter) blockFloor = 2;
+        else blockFloor = 3;
+
+        int gap = blockFloor - playerFloor;
+
+        return gap;
+    }
+
+    public static List<int> GetDownstairThroughBlock(int parfaitOrder,int dir, bool onCloud)
+    {
+        
 
         List<int> throughBlockList = new List<int>();
 
@@ -134,9 +153,9 @@ static class BlockNumber
 
     #region Stop Block List
 
-    public static List<int> GetThirdFloorStopBlock(int dir, bool onCloud)
+    public static List<int> GetThirdFloorStopBlock(int parfaitOrder)
     {
-        int parfaitOrder = GameController.ParfaitOrder;
+       
 
         List<int> stopBlockList = new List<int>();
         stopBlockList.AddRange(secondLevel);
@@ -156,9 +175,9 @@ static class BlockNumber
         return stopBlockList;
     }
 
-    public static List<int> GetUpstairStopBlock(int dir, bool onCloud)
+    public static List<int> GetUpstairStopBlock(int parfaitOrder,bool onCloud)
     {
-        int parfaitOrder = GameController.ParfaitOrder;
+       
 
         List<int> stopBlockList = new List<int>();
 
@@ -187,9 +206,9 @@ static class BlockNumber
         return stopBlockList;
     }
 
-    public static List<int> GetDownstairStopBlock(int dir, bool onCloud)
+    public static List<int> GetDownstairStopBlock(int parfaitOrder,bool onCloud)
     {
-        int parfaitOrder = GameController.ParfaitOrder;
+       
 
         List<int> stopBlockList = new List<int>();
 

@@ -3,17 +3,37 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+public struct Unit_Movement
+{
+	public Player player;
+	public int direction;
+	public Vector3 from;
+	public Vector3 to;
+
+	public Unit_Movement(Player player_ , int direction_ , Vector3 from_ , Vector3 to_)
+    {
+		player = player_;
+		direction = direction_;
+		from = from_;
+		to = to_;
+    }
+
+	
+}
+
 public class MoveCommand : ICommand
 {
+	List<Unit_Movement> movements;
+
 
 	public struct PlayerState
     {
-		public Player.State state;
+		public State state;
 		public bool onCloud;
 		public bool isLock;
 		public int temp;
 
-		public PlayerState(Player.State state_ , bool cloud , bool isLock_ , int tmp)
+		public PlayerState(State state_ , bool cloud , bool isLock_ , int tmp)
         {
 			state = state_;
 			onCloud = cloud;
@@ -63,11 +83,10 @@ public class MoveCommand : ICommand
 													//파르페 얼음은 오더로 계산가능
 													//크래커가 문제...
 
-	public MoveCommand(Player p, Map m, int direction)
+	public MoveCommand(List<Unit_Movement> movements)
 	{
-		player = p;
-		map = m;
-		dir = direction;
+		this.movements = movements;
+		
 
 		// playerNum = map.GetBlockData((int)player.transform.position.x, (int)player.transform.position.z);
 
@@ -133,11 +152,11 @@ public class MoveCommand : ICommand
 		other_player.isLock = player_other_state.isLock;
 		other_player.state = player_other_state.state;
 
-		if(main_player.state == Player.State.Master)
+		if(main_player.state == State.Master)
         {
 			other_player.transform.SetParent(main_player.transform);
         }
-		else if(main_player.state == Player.State.Slave)
+		else if(main_player.state == State.Slave)
         {
 			main_player.transform.SetParent(other_player.transform);
 		}

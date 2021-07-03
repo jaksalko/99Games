@@ -79,7 +79,7 @@ public class UiController : UIScript
 
     }
 
-    public void GameEnd(bool isSuccess, int star,int remain_snow, int moveCount, bool custom , bool editor)
+    public void GameEnd(bool isSuccess, int star,int remain_snow, int moveCount, GameMode gameMode)
     {
         //inGame.SetActive(false);
         //SetMoveCountText(moveCount);
@@ -87,20 +87,22 @@ public class UiController : UIScript
         //infinite --> 종료 팝업 선택 버튼 : 다음 맵 / 로비로?
         //editor --> 종료 팝업 선택 버튼 : 생성할지 말지
         //Default --> 종료 팝업 선택 버튼 : 다음 스테이지 / 로비로
-        if (custom)
+        switch (gameMode)
         {
-            customSceneResultPopup.ShowResultPopup(isSuccess, remain_snow, moveCount, star_count: star, gameManager.retry);
-        }
-        else if(editor)
-        {
-            int level = (moveCount / 5) + 1;
-            if (level > 5) level = 5;
+            case GameMode.StageMode:
+                stageSceneResultPopup.ShowResultPopup(isSuccess,remain_snow, moveCount , star_count : star);
+                break;
+            case GameMode.CustomMode:
+                customSceneResultPopup.ShowResultPopup(isSuccess, remain_snow, moveCount, star_count: star, gameManager.retry);
+                break;
+            case GameMode.EditorMode:
+                int level = (moveCount / 5) + 1;
+                if (level > 5) level = 5;
 
-            editorSceneResultPopup.ShowResultPopup(moveCount, level);
-        }
-        else
-        {
-            stageSceneResultPopup.ShowResultPopup(isSuccess,remain_snow, moveCount , star_count : star);
+                editorSceneResultPopup.ShowResultPopup(moveCount, level);
+                break;
+            case GameMode.InfiniteMode:
+                break;
         }
        
     }
@@ -289,7 +291,7 @@ public class UiController : UIScript
     public void NextLevel()
     {
         //GameController googleinstance level++....
-        if(GameController.instance.customMode)
+        if(GameController.instance.gameMode == GameMode.CustomMode)
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         else
             Load_Island(GameManager.instance.nowLevel);

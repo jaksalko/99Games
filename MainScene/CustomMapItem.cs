@@ -82,7 +82,7 @@ public class CustomMapItem : MonoBehaviour
             }
         }
 
-        map.Initialize(new Vector2(itemdata.height, itemdata.width),isParfait, posA, posB, datas, styles, star_limit);
+        map.Initialize(new Vector2Int(itemdata.height, itemdata.width),isParfait, posA, posB, datas, styles, star_limit);
         map.map_title = itemdata.title;
         moveCount.text = itemdata.move.ToString();
 

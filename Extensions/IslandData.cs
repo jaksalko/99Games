@@ -23,7 +23,7 @@ public class IslandData
         {
             if (stage <= island_last[i])
             {
-                Debug.Log("island num : " + island_last[i]);
+                
                 return i;
             }
         }

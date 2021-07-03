@@ -187,7 +187,7 @@ public class CSVManager : MonoBehaviour
             bool isParfait = int.Parse(stage[i]["parfait"].ToString()) == 0 ? false : true;
             List<int> star_limit = GetList(stage[i]["star_limit"].ToString().Split('/'));
 
-            newMap.Initialize(new Vector2(height, width), isParfait, posA, posB, datas, styles, star_limit);
+            newMap.Initialize(new Vector2Int(height, width), isParfait, posA, posB, datas, styles, star_limit);
             newMap.transform.SetParent(transform);
 
             islands[title].maps.Add(newMap);

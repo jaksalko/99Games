@@ -8,6 +8,16 @@ using System;
 using UnityEngine.EventSystems;
 using System.Linq;
 
+
+public enum GameMode
+{
+    StageMode,
+    CustomMode,
+    EditorMode,
+    InfiniteMode
+        
+}
+
 public class GameController : MonoBehaviour
 {
     public class EditorClearRequest
@@ -47,9 +57,15 @@ public class GameController : MonoBehaviour
     
 
     public static GameController instance;
+    
     XMLManager xmlManager = XMLManager.ins;
     AWSManager awsManager = AWSManager.instance;
     CSVManager csvManager = CSVManager.instance;
+    SoundManager soundManager;
+    GameManager gameManager = GameManager.instance;
+    JsonAdapter jsonAdapter = JsonAdapter.instance;
+
+    
     [Header("Controller Field")]
     public CameraController cameraController;
     public UiController ui;
@@ -83,8 +99,11 @@ public class GameController : MonoBehaviour
         set => instance.parfaitOrder = value;
     }
 
-    public bool customMode;
-    public bool editorMode;
+
+    public GameMode gameMode;
+    
+   
+    
     public int unirx_dir = -1;
 
 
@@ -100,9 +119,6 @@ public class GameController : MonoBehaviour
 
 
 
-    SoundManager soundManager;
-    GameManager gameManager = GameManager.instance;
-    JsonAdapter jsonAdapter = JsonAdapter.instance;
     
 
     [SerializeField]
@@ -166,6 +182,25 @@ public class GameController : MonoBehaviour
             .Select(_ => Input.mousePosition)
             .Subscribe(_ => { up = _; MakeMoveCommand(); click = false; });
 
+
+        this.UpdateAsObservable()
+               .Where(_ => Input.GetKeyDown(KeyCode.UpArrow))
+               .Subscribe(_ => { MakeMoveCommand(0); click = false; });
+
+        this.UpdateAsObservable()
+               .Where(_ => Input.GetKeyDown(KeyCode.RightArrow))
+               .Subscribe(_ => { MakeMoveCommand(1); click = false; });
+
+        this.UpdateAsObservable()
+               .Where(_ => Input.GetKeyDown(KeyCode.DownArrow))
+               .Subscribe(_ => { MakeMoveCommand(2); click = false; });
+
+        this.UpdateAsObservable()
+               .Where(_ => Input.GetKeyDown(KeyCode.LeftArrow))
+               .Subscribe(_ => { MakeMoveCommand(3); click = false; });
+
+
+
 #elif UNITY_ANDROID || UNITY_IOS
         var touchDownStream = this.UpdateAsObservable()
           
@@ -186,6 +221,44 @@ public class GameController : MonoBehaviour
 #endif
 
     }
+    public void MakeMoveCommand(int unirx_dir)
+    {
+        
+
+        //make command;
+        if (!nowPlayer.Moving() && isPlaying && unirx_dir != -1)
+        {
+            List<Unit_Movement> movements = new List<Unit_Movement>();
+            map.SetBlockData((int)nowPlayer.transform.position.x, (int)nowPlayer.transform.position.z, nowPlayer.temp);
+            map.GetDestination(movements, nowPlayer, nowPlayer.transform.position, nowPlayer.transform.position);
+
+            moveCommand = new MoveCommand(movements);
+
+            handler.ExecuteCommand(moveCommand);
+            moveCount++;
+            if (moveCount < map.star_limit[0])
+            {
+                star = 3;
+            }
+            else if (moveCount < map.star_limit[1])
+            {
+                star = 2;
+            }
+            else if (moveCount < map.star_limit[2])
+            {
+                star = 1;
+            }
+            else
+            {
+                star = 0;
+            }
+
+            ui.SetMoveCountText(moveCount, map.star_limit[2]);
+            ui.revertButton.interactable = true;
+        }
+
+    }
+
     public void MakeMoveCommand()
     {
         unirx_dir = NormalizeSwipe();
@@ -193,8 +266,11 @@ public class GameController : MonoBehaviour
         //make command;
         if (!nowPlayer.Moving() && isPlaying && unirx_dir != -1)
         {
+            List<Unit_Movement> movements = new List<Unit_Movement>();
+            map.SetBlockData((int)nowPlayer.transform.position.x, (int)nowPlayer.transform.position.z, nowPlayer.temp);
+            map.GetDestination(movements,nowPlayer,nowPlayer.transform.position, nowPlayer.transform.position);
 
-            moveCommand = new MoveCommand(nowPlayer, map, unirx_dir);
+            moveCommand = new MoveCommand(movements);
 
             handler.ExecuteCommand(moveCommand);
             moveCount++;
@@ -286,16 +362,25 @@ public class GameController : MonoBehaviour
     void GameSetting()
     {
         
-        if (customMode)
+        switch (gameMode)
         {
-            map = mapLoader.CustomPlayMap();
+            case GameMode.StageMode:
+                map = mapLoader.GenerateMap(gameManager.nowLevel);
+                break;
+            case GameMode.CustomMode:
+                map = mapLoader.CustomPlayMap();
+                break;
+            case GameMode.EditorMode:
+                map = mapLoader.EditorMap();
+                break;
+            case GameMode.InfiniteMode:
+                map = mapLoader.InfiniteMap();
+                break;
         }
-        else if (editorMode)
-        {
-            map = mapLoader.EditorMap();
-        }
-        else
-            map = mapLoader.GenerateMap(gameManager.nowLevel);//map 생성
+       
+            
+        
+        
 
 
 
@@ -397,7 +482,7 @@ public class GameController : MonoBehaviour
         isPlaying = play;
     }
 
-    public void GameStart()//called by cameracontroller.cs after mapscanning...
+    public void GameStart()//called by CameraController.cs after mapscanning...
     {
 
         //if(!simulating)
@@ -419,6 +504,7 @@ public class GameController : MonoBehaviour
         
         ui.inGame.SetActive(true);
 
+        //Set Tutorial 
         if(SceneManager.GetActiveScene().buildIndex >= 6)
         {
             if (gameManager.nowLevel >= 0 && gameManager.nowLevel <= csvManager.islandData.tutorial)
@@ -493,7 +579,7 @@ public class GameController : MonoBehaviour
         
        
         
-        if (customMode)
+        if (gameMode == GameMode.CustomMode)
         {
             
             copyHistory.editor_clear++;
@@ -533,7 +619,7 @@ public class GameController : MonoBehaviour
             
 
         }
-        else if (editorMode)//mapLoader.editorMap 생성하기
+        else if (gameMode == GameMode.EditorMode)//mapLoader.editorMap 생성하기
         {
             awsManager.userHistory.editor_make++;
             jsonAdapter.UpdateData(awsManager.userHistory, "userHistory", GameEndCallback);
@@ -607,7 +693,7 @@ public class GameController : MonoBehaviour
             {
                 jsonAdapter.GetAllUserData(awsManager.userInfo.nickname, UpdateUserDataCallback);
 
-                if(customMode)
+                if(gameMode == GameMode.CustomMode)
                 {
                     CustomMapItem map = awsManager.editorMap.Find(x => x.itemdata.map_id == GameManager.instance.playCustomData.map_id);
                     map.itemdata = GameManager.instance.playCustomData;
@@ -628,8 +714,8 @@ public class GameController : MonoBehaviour
         {
             if (jsonAdapter.EndLoading())
             {
-                ui.GameEnd(isSuccess, star, snow_remain, moveCount, customMode, editorMode);
-                if (customMode)
+                ui.GameEnd(isSuccess, star, snow_remain, moveCount, gameMode);
+                if (gameMode == GameMode.CustomMode)
                     gameManager.retry = true;
             }
 

@@ -311,7 +311,7 @@ public class UserFriend
 public class EditorMap
 {
     public string map_id;//nickname + title // 같은 닉네임으로 같은 타이틀 제작 금지
-    public int map_no;//난수 생성 // 중복 금
+    public int map_no;//난수 생성 // 중복 금지
     public string maker;
     public string title;
     public string make_time;

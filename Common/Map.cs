@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using System.Linq;
 
 
 
 [Serializable]
-public class Map : MonoBehaviour, IMap
+public class Map : MonoBehaviour
 {
     public string map_title;
     public int total_snow;
 
-    int[,] step;
+    int[,] step = new int[4, 2] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
     public int mapsizeH;
     public int mapsizeW;
     public List<int> star_limit;
@@ -20,6 +20,7 @@ public class Map : MonoBehaviour, IMap
     public bool parfait = false;
     public Vector3 startPositionA;//    y축 -9 : 1 층 , -8 : 2층 
     public Vector3 startPositionB;
+
 
 
     public List<List<int>> datas;
@@ -30,27 +31,11 @@ public class Map : MonoBehaviour, IMap
 
     public List<Vector2> snowList;
     public List<Block> stepped_blockList;
-
     
-    private void Awake()
+    public void Initialize(Vector2Int size, bool isParfait, Vector3 posA, Vector3 posB, List<List<int>> datas, List<List<int>> styles, List<int> star_limit)
     {
-        Debug.Log("Activate");
-        step = new int[4, 2] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
-        blocks = new Block[mapsizeH, mapsizeW];//로더의 MakeGround에서 채워짐
-        check = new bool[mapsizeH, mapsizeW];//마찬가지
-
-        snowList = new List<Vector2>();
-        stepped_blockList = new List<Block>();
-        
-    }
-
-   
-
-    public void Initialize(Vector2 size, bool isParfait, Vector3 posA, Vector3 posB, List<List<int>> datas, List<List<int>> styles, List<int> star_limit)
-    {
-        mapsizeH = (int)size.x;
-        mapsizeW = (int)size.y;
+        mapsizeH = size.x;
+        mapsizeW = size.y;
         parfait = isParfait;
         startPositionA = posA;
         startPositionB = posB;
@@ -62,6 +47,12 @@ public class Map : MonoBehaviour, IMap
         this.styles = styles;
         if(map_title == null)
             map_title = PlayerPrefs.GetString("nickname","pingpengboong") + " " + DateTime.Now.ToString("yyyyMMddHHmmss");
+        
+        blocks = new Block[mapsizeH, mapsizeW];//로더의 MakeGround에서 채워짐
+        check = new bool[mapsizeH, mapsizeW];//마찬가지
+
+        snowList = new List<Vector2>();
+        stepped_blockList = new List<Block>();
     }
 
     bool isEndGame()
@@ -86,11 +77,11 @@ public class Map : MonoBehaviour, IMap
         switch (floor)
         {
             case 1:
-                return BlockNumber.GetDownstairThroughBlock(getDirection, onCloud);
+                return BlockNumber.GetDownstairThroughBlock(GameController.ParfaitOrder,getDirection, onCloud);
             case 2:
-                return BlockNumber.GetUpstairThroughBlock(getDirection, onCloud);
+                return BlockNumber.GetUpstairThroughBlock(GameController.ParfaitOrder,getDirection, onCloud);
             case 3:
-                return BlockNumber.GetThirdFloorThroughBlock(getDirection, onCloud);
+                return BlockNumber.GetThirdFloorThroughBlock(getDirection);
                 
 
         }
@@ -102,11 +93,11 @@ public class Map : MonoBehaviour, IMap
         switch (floor)
         {
             case 1:
-                return BlockNumber.GetDownstairStopBlock(getDirection, onCloud);
+                return BlockNumber.GetDownstairStopBlock(GameController.ParfaitOrder,onCloud);
             case 2:
-                return BlockNumber.GetUpstairStopBlock(getDirection, onCloud);
+                return BlockNumber.GetUpstairStopBlock(GameController.ParfaitOrder,onCloud);
             case 3:
-                return BlockNumber.GetThirdFloorStopBlock(getDirection, onCloud);
+                return BlockNumber.GetThirdFloorStopBlock(GameController.ParfaitOrder);
 
         }
 
@@ -115,239 +106,108 @@ public class Map : MonoBehaviour, IMap
 
     bool CheckNextBlock(List<int> checkList, int data)
     {
-        for (int i = 0; i < checkList.Count; i++)
+        foreach (var check in checkList)
         {
-            if (checkList[i] == data)
+            if (check == data)
                 return true;
         }
+        
         return false;
     }
 
     
 
-    bool ChangeState(int next, int nextnext, Player player, ref Vector3 pos)
-    {
-
-        int floor = (int)pos.y;
-        int direction = player.getDirection;
-        int posX = (int)pos.x;
-        int posZ = (int)pos.z;
-
-        switch (floor)
-        {
-            case 1:
-                if (next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
-                {
-                    //change block data parfait to normal
-                    //blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.normal; //pos 위치가 아닌 한칸 이동한 위치
-                    if ((next % 10 - 1) == GameController.ParfaitOrder)
-                        GameController.ParfaitOrder++;
-
-
-                    return true;
-                }
-                else if(next >= BlockNumber.cloudUp && next <= BlockNumber.cloudLeft)
-                {
-                    int cloudDirection = (next % 10) - 1;
-                    Vector3 targetPosition = new Vector3(posX + step[direction, 1], pos.y, posZ + step[direction, 0]);
-
-                    if (player.getDirection != cloudDirection)
-                    {
-                        player.getDirection = cloudDirection;
-                        player.targetPositions.Add(new Tuple<Vector3, int>(targetPosition,cloudDirection));
-                    }
-                    
-                    player.onCloud = true;
-
-                    return true;
-                }
-                else if (next >= BlockNumber.slopeUp && next <= BlockNumber.slopeLeft)
-                {
-                    int nextFloor = floor + 1;
-                    if (CheckNextBlock(GetThroughBlockList(nextFloor, player.getDirection, player.onCloud), nextnext) || CheckNextBlock(GetStopBlockList(nextFloor, player.getDirection, player.onCloud), nextnext))//다음은 지나갈 수 있는 블럭
-                    {
-                        Debug.Log("floor : 1");
-                        //다음 블럭은 올라갈 수 있다
-                        pos.y += 1;
-                        return true;
-
-
-                    }
-                    else
-                    {
-                        Debug.Log("cant climb slope...");
-                        //올라갈 수 없다 --> 슬로프를 올라가서는 안되므로 false 를 반환.
-                        return false;
-                    }
-                    //player upstair --> true (floor = 1)
-                    //if state==master --> other.floor = 2
-                    //블럭 리스트 업데이트
-
-                    //슬로프 앞에가 막혀있다면
-                    //리턴 false
-                    //upstair --> false (floor = 0)
-                    //if state==master --> other.floor = 1
-                    //다시 블럭리스트 업데이트 
-                }
-                else
-                {
-                    return true;
-                }
-
-            case 2:
-                if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)
-                {
-                    //blocks[posZ + step[direction, 0], posX + step[direction, 1]].data = BlockNumber.upperNormal;
-                    if((next%10-1) == GameController.ParfaitOrder)
-					    GameController.ParfaitOrder++;
-                    Debug.Log("up");
-                    return true;
-                }
-                else if (next >= BlockNumber.cloudUp && next <= BlockNumber.cloudLeft)
-                {
-                    pos.y -= 1;
-
-                    int cloudDirection = (next % 10) - 1;
-                    Vector3 targetPosition = new Vector3(posX + step[direction, 1], pos.y, posZ + step[direction, 0]);
-
-                    if (player.getDirection != cloudDirection)
-                    {
-                        player.getDirection = cloudDirection;
-                        player.targetPositions.Add(new Tuple<Vector3, int>(targetPosition, cloudDirection));
-                    }
-                    player.onCloud = true;
-                    
-
-                    return true;
-                }
-                else if (next >= BlockNumber.upperCloudUp && next <= BlockNumber.upperCloudLeft)
-                {
-                    int cloudDirection = (next % 10) - 1;
-                    Vector3 targetPosition = new Vector3(posX + step[direction, 1], pos.y, posZ + step[direction, 0]);
-
-                    if (player.getDirection != cloudDirection)
-                    {
-                        player.getDirection = cloudDirection;
-                        player.targetPositions.Add(new Tuple<Vector3, int>(targetPosition, cloudDirection));
-                    }
-
-                    player.onCloud = true;
-
-                    return true;
-                }
-                else if (next >= BlockNumber.slopeUp && next <= BlockNumber.slopeLeft)
-                {
-                    int nextFloor = floor - 1;
-                    if (CheckNextBlock(GetThroughBlockList(nextFloor, player.getDirection, player.onCloud), nextnext) || CheckNextBlock(GetStopBlockList(nextFloor, player.getDirection, player.onCloud), nextnext))//다음은 지나갈 수 있는 블럭
-                    {
-                        //다음 블럭은 내려갈 수 있다
-                        pos.y -= 1;
-                        return true;
-
-                    }
-                    else
-                    {
-                        //내려갈 수 없다 --> 슬로프를 내력가서는 안되므로 false 를 반환.
-                        return false;
-                    }
-                }
-                else
-                {
-                    return true;
-                }
-
-            case 3://2층에서는 through 로 들어올 수 없음.?
-                if (next >= BlockNumber.cloudUp && next <= BlockNumber.cloudLeft)
-                {
-                    
-                    player.onCloud = true;
-                    pos.y -= 2;
-                    int cloudDirection = (next % 10) - 1;
-                    Vector3 targetPosition = new Vector3(posX + step[direction, 1], pos.y, posZ + step[direction, 0]);
-
-                    if (player.getDirection != cloudDirection)
-                    {
-                        player.getDirection = cloudDirection;
-                        player.targetPositions.Add(new Tuple<Vector3, int>(targetPosition, cloudDirection));
-                    }
-                    return true;
-                }
-                else if (next >= BlockNumber.upperCloudUp && next <= BlockNumber.upperCloudLeft)
-                {
-                   
-                    player.onCloud = true;
-                    pos.y -= 1;
-                    int cloudDirection = (next % 10) - 1;
-                    Vector3 targetPosition = new Vector3(posX + step[direction, 1], pos.y, posZ + step[direction, 0]);
-
-                    if (player.getDirection != cloudDirection)
-                    {
-                        player.getDirection = cloudDirection;
-                        player.targetPositions.Add(new Tuple<Vector3, int>(targetPosition, cloudDirection));
-                    }
-                    return true;
-                }
-                return false;
-
-        }
-
-        return false;//error
-    }
+   
 
     
-    public void GetDestination(Player player, Vector3 pos)
+    public void GetDestination(List<Unit_Movement> movements,Player player, Vector3 from, Vector3 to)
     {
-        
 
-        Debug.Log("player name : " + player.name + " position : " + pos + " player dir : " + player.getDirection);
+       
+        
         int direction = player.getDirection;
        
-        int floor = (int)pos.y;
-        int posX = (int)pos.x;
-        int posZ = (int)pos.z;
+        int floor = (int)from.y;
+        int posX = (int)from.x;
+        int posZ = (int)from.z;
 
-        if (pos == player.transform.position)//시작부분
+        if (from == player.transform.position)//시작부분
         {
-            Debug.Log("frist time call by getDestination");
+            
             if (blocks[posZ,posX].type == Block.Type.Cracker)
             {
-                Debug.Log("frist time call by getDestination : add cracker block");
+               
                 stepped_blockList.Add(blocks[posZ, posX]);
             }
         }
 
 
 
-        int next = GetBlockData(x: posX + step[direction, 1], z: posZ+ step[direction, 0]);
-        int nextnext = GetBlockData(x: posX + step[direction, 1] * 2, z: posZ + step[direction, 0] * 2);
+        int next = GetBlockData( posX + step[direction, 1],  posZ+ step[direction, 0]);
+        int nextnext = GetBlockData( posX + step[direction, 1] * 2,  posZ + step[direction, 0] * 2);
+        int nextBlockOrder = next % 10 - 1; // 파르페 순서 또는 솜사탕 방향
 
-        if(CheckNextBlock(GetThroughBlockList(floor, direction, player.onCloud), next) && ChangeState(next, nextnext, player , ref pos))//다음은 지나갈 수 있는 블럭
+        if (CheckNextBlock(GetThroughBlockList(floor, direction, player.onCloud), next))//다음은 지나갈 수 있는 블럭
         {
-            //지나갈 수 있는 블럭
-            player.isLock = false;
-
-            posX += step[direction, 1];
-            posZ += step[direction, 0];
-            
-            UpdateCheckTrue(width: posX, height: posZ);
-
-            pos = new Vector3(posX, pos.y, posZ);
-            //if not endpoint recursive next point
-            if (!isEndGame())
+            int nextFloor = (floor == 1) ? 2 : 1;
+            if (next >= BlockNumber.slopeUp && next <= BlockNumber.slopeLeft
+                && !CheckNextBlock(GetThroughBlockList(nextFloor, player.getDirection, player.onCloud), nextnext) && !CheckNextBlock(GetStopBlockList(nextFloor, player.getDirection, player.onCloud), nextnext))
             {
-                Player other = player.other;
-                if(other.isLock)
+                Debug.Log("can't use slope");
+            }
+            else
+            {
+                to.x += step[direction, 1];
+                to.z += step[direction, 0];
+
+                if(BlockNumber.cloudBlocks.Contains(next))
                 {
-                    other.isLock = false;
-                    //other.Move()
-                    other.Move(this, other.temp % 10 - 1);
+                    to.y += BlockNumber.GetFloorGap(floor, next);
+
+                    if (player.getDirection != nextBlockOrder)
+                    {
+                        player.getDirection = nextBlockOrder;
+                        movements.Add(new Unit_Movement(player, nextBlockOrder, from, to));
+                        from = to;
+                    }
+
+                    player.onCloud = true;
+                }
+                else if(BlockNumber.parfaitBlocks.Contains(next))
+                {
+                    if (nextBlockOrder == GameController.ParfaitOrder)
+                        GameController.ParfaitOrder++;
+                }
+                else if (BlockNumber.slopeBlocks.Contains(next))
+                {
+                    to.y = nextFloor;
+
                 }
 
+                player.isLock = false;
+                UpdateCheckTrue(width: (int)to.x, height: (int)to.z);
 
-                GetDestination(player, pos);
-                return;
+                if (!isEndGame())
+                {
+                    Player other = player.other;
+                    if (other.isLock)
+                    {
+                        other.isLock = false;
+                        other.getDirection = other.temp % 10 - 1;
+                        blocks[(int)other.transform.position.z, (int)other.transform.position.x].data = other.temp;
+                        GetDestination(movements, other, other.transform.position, other.transform.position);
+                        //other.Move(this, other.temp % 10 - 1);
+                    }
 
+
+                    GetDestination(movements, player, from,to);
+                    return;
+
+                }
             }
+          
+           
+            
 
 
         }
@@ -356,109 +216,43 @@ public class Map : MonoBehaviour, IMap
             player.onCloud = false; // stop 이면 무조건 oncloud 에서 벗어남.
             player.isLock = false;
 
-            posX += step[direction, 1];
-            posZ += step[direction, 0];
+            int floorGap = BlockNumber.GetFloorGap(floor, next);
 
-            switch (floor)
+            to.x += step[direction, 1];
+            to.z += step[direction, 0];
+            to.y += floorGap;
+
+            if (floorGap < 0) player.actionnum = 5;
+            else player.actionnum = 3;
+
+            if (BlockNumber.parfaitBlocks.Contains(next))
             {
-                case 1://솜사탕 위였으면 1단계 블럭 또는 열려있는 파르페  솜사탕 위가 아니면 솜사탕에서 멈춤 충돌 모션은
-                    //actionnum = 3; //
-                    
-                    if (next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
-                    {
-                        player.actionnum = 3;//crash : 3
-                        blocks[posZ, posX].data = BlockNumber.normal;
-                        if ((next % 10 - 1) == GameController.ParfaitOrder)
-                            GameController.ParfaitOrder++;
-                    }
-                    else
-                    {
-                        player.actionnum = 3;//crash : 3
-                    }
-                    break;
 
-                case 2://drop 1-> 0 or ride character
-                    if(next == BlockNumber.character)
-                    {
-                        //ride motion
-                        player.actionnum = 2;//ride : 2
+                
 
-                        //player state          Idle --> Slave
-                        //other player state    Idle --> Master
-                    }
-                    else if(next >= BlockNumber.normal && next <= BlockNumber.cracker_2)
-                    {
-                        pos.y -= 1;
-                        player.actionnum = 5;//drop : 5
-                    }
-                    else if (next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
-                    {
-                        pos.y -= 1;
-                        player.actionnum = 5;//drop : 5
-                        blocks[posZ, posX].data = BlockNumber.normal;
-                        if ((next % 10 - 1) == GameController.ParfaitOrder)
-                            GameController.ParfaitOrder++;
-                    }
-                    else if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)//onCloud(2층)에서 2층 파레페 먹고 멈
-                    {
-                        player.actionnum = 3;// crash : 3
-                        blocks[posZ, posX].data = BlockNumber.upperNormal;
-                        if ((next % 10 - 1) == GameController.ParfaitOrder)
-                            GameController.ParfaitOrder++;
-                    }
-                    else
-                    {
-                        player.actionnum = 3;// crash : 3
-                    }
+                if (nextBlockOrder == GameController.ParfaitOrder)
+                    GameController.ParfaitOrder++;
 
-                    break;
+                if (BlockNumber.second_floor.Contains(next))
+                    blocks[(int)to.z, (int)to.x].data = BlockNumber.normal;
+                else
+                    blocks[(int)to.z, (int)to.x].data = BlockNumber.upperNormal;
+            }
+            else if(next == BlockNumber.character)
+            {
+                player.actionnum = 2;//ride : 2
+            }
 
-                case 3://drop 2-> 1 or 0
-                    if (next >= BlockNumber.normal && next <= BlockNumber.cracker_2)
-                    {
-                        player.actionnum = 5;//drop : 5
-                        pos.y -= 2;
-                    }
-                    else if(next >= BlockNumber.parfaitA && next <= BlockNumber.parfaitD)
-                    {
-                        player.actionnum = 5;//drop : 5
-                        pos.y -= 2;
-                        blocks[posZ, posX].data = BlockNumber.normal;
-                        if ((next % 10 - 1) == GameController.ParfaitOrder)
-                            GameController.ParfaitOrder++;
-                    }
-                    else if(next >= BlockNumber.upperNormal && next <= BlockNumber.upperCracker_2)
-                    {
-                        player.actionnum = 5;//drop : 5
-                        pos.y -= 1;
-                    }
-                    else if (next >= BlockNumber.upperParfaitA && next <= BlockNumber.upperParfaitD)
-                    {
-                        player.actionnum = 5;//drop : 5
-                        pos.y -= 1;
-                        blocks[posZ, posX].data = BlockNumber.upperNormal;
-                        if ((next % 10 - 1) == GameController.ParfaitOrder)
-                            GameController.ParfaitOrder++;
-                    }
-                    else
-                    {
-                        player.actionnum = 3;//crash : 3
-                    }
-                    break;
-            }//end switch
-
-
-            
-            
-            pos = new Vector3(posX, pos.y, posZ);
-            UpdateCheckTrue(width: posX, height: posZ);
+            UpdateCheckTrue(width: (int)to.x, height: (int)to.z);
 
             Player other = player.other;
             if (other.isLock)
             {
                 other.isLock = false;
-                //other.Move()
-                other.Move(this, other.temp % 10 - 1);
+                other.getDirection = other.temp % 10 - 1;
+                blocks[(int)other.transform.position.z, (int)other.transform.position.x].data = other.temp;
+                GetDestination(movements, other, other.transform.position, other.transform.position);
+                //other.Move(this, other.temp % 10 - 1);
             }
 
 
@@ -467,16 +261,16 @@ public class Map : MonoBehaviour, IMap
         }
         else//cant block
         {
-            Debug.Log("cant block : " + pos + " BlockNumber : " + next);
+            
 
-            if((pos.y == 1 && next == BlockNumber.character) || (pos.y == 2 &&next == BlockNumber.upperCharacter))
+            if((to.y == 1 && next == BlockNumber.character) || (to.y == 2 &&next == BlockNumber.upperCharacter))
             {
                 player.actionnum = 4; // character끼리 충돌 : 4
 
                 if (player.onCloud)
                     player.isLock = true;
             }
-            else if(player.state == Player.State.Master && pos.y == 1 && next >= BlockNumber.upperNormal && next < BlockNumber.upperObstacle)
+            else if(player.state == State.Master && to.y == 1 && next >= BlockNumber.upperNormal && next < BlockNumber.upperObstacle)
             {
                 player.actionnum = 3;
                 player.stateChange = true;
@@ -488,20 +282,21 @@ public class Map : MonoBehaviour, IMap
         }
 
         //pos = new Vector3(posX, pos.y, posZ);
-        player.targetPositions.Add(new Tuple<Vector3, int>(pos, player.getDirection));
+        //player.targetPositions.Add(new Tuple<Vector3, int>(pos, player.getDirection));
+        movements.Add(new Unit_Movement(player, player.getDirection,from, to));
         //temp
-        player.temp = blocks[posZ, posX].data;
-		Debug.Log("player temp is : " + player.temp);
-		switch ((int)pos.y)
+        player.temp = blocks[(int)to.z, (int)to.x].data;
+		
+		switch ((int)to.y)
         {
             case 1:
-                blocks[posZ, posX].data = BlockNumber.character;
+                blocks[(int)to.z, (int)to.x].data = BlockNumber.character;
                 break;
             case 2:
-                blocks[posZ, posX].data = BlockNumber.upperCharacter;
+                blocks[(int)to.z, (int)to.x].data = BlockNumber.upperCharacter;
                 break;
             case 3:
-                blocks[posZ, posX].data = BlockNumber.upperCharacter;
+                blocks[(int)to.z, (int)to.x].data = BlockNumber.upperCharacter;
                 break;
         }
         //remaincheck는 도착한 후
@@ -533,7 +328,7 @@ public class Map : MonoBehaviour, IMap
         //Debug.Log(height + "," + width + "  is checked " + isCheck);
         check[height, width] = isCheck;
     }
-
+    
     public int GetBlockData(int x, int z)
     {
         if (x < mapsizeW && x >=0 && z < mapsizeH && z >= 0)
@@ -541,7 +336,7 @@ public class Map : MonoBehaviour, IMap
         else
             return BlockNumber.obstacle;
     }
-
+    
     public void SetBlockData(int x, int z , int value)
     {
         blocks[z, x].data = value;

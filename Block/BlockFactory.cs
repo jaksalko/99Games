@@ -207,14 +207,14 @@ public class BlockFactory : MonoBehaviour
             if(player_count == 0)
             {
                 player_count = 1;
-                player_skin = AWSManager.instance.userInfo.skin_a;
+                //player_skin = AWSManager.instance.userInfo.skin_a;
             }
             else
             {
                 player_count = 0;
-                player_skin = AWSManager.instance.userInfo.skin_b;
+                //player_skin = AWSManager.instance.userInfo.skin_b;
             }
-            newBlock = Instantiate(playerPrefabs[player_skin], new Vector3(position.x, 1, position.y), Quaternion.identity);
+            newBlock = Instantiate(playerPrefabs[player_count], new Vector3(position.x, 1, position.y), Quaternion.identity);
         }
         else if(BlockNumber.upperCharacter == blockNumber)
         {
@@ -233,12 +233,13 @@ public class BlockFactory : MonoBehaviour
         }
         else
         {
+            Debug.LogError("error! blocknum : "+  blockNumber);
             newBlock = null;
         }
 
 
         newBlock.transform.SetParent(transform);
-        Debug.Log(styles[styles.Count - 1]);
+//        Debug.Log(styles[styles.Count - 1]);
         newBlock.Init(blockNumber, styles[height]);
 
         return newBlock;

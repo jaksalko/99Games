@@ -5,16 +5,94 @@ using UnityEngine.UI;
 using System;
 using System.Linq;
 
+public enum State
+{
+	Idle,//no interaction
+	Master,//in interaction and state is master
+	Slave//in interaction and state is slave...
+}
+
+public struct PlayerProperty
+{
+	private Vector3Int _position;
+	
+	public Vector3Int Position
+	{
+		get => _position;
+		set => _position = value;
+	}
+
+	private int _blockTemp;
+
+	public int BlockTemp
+	{
+		get => _blockTemp;
+		set => _blockTemp = value;
+	}
+	private int _direction;
+
+	public int Direction
+	{
+		get => _direction;
+		set => _direction = value;
+	}
+	private State _state;
+
+	public State State
+	{
+		get => _state;
+		set => _state = value;
+	}
+	private bool _isLock;
+
+	public bool Lock
+	{
+		get => _isLock;
+		set => _isLock = value;
+	}
+	
+	private bool _onCloud;
+	
+	public bool Cloud
+	{
+		get => _onCloud;
+		set => _onCloud = value;
+	}
+	private int _floor; public int Floor
+	{
+		get => _floor;
+		set
+		{
+			if (value < 1 || value > 3) return;
+			
+			
+			_floor = value;
+			_position.y = value;
+			Debug.Log(_floor);
+			if (_floor == 1) _blockTemp = BlockNumber.character;
+			else _blockTemp = BlockNumber.upperCharacter;
+
+		}
+	}
+	 
+	public PlayerProperty(Vector3Int pos , int dir , State state , bool isLock , bool onCloud , int temp)
+	{ 
+		_position = pos;
+		_direction = dir;
+		_state = state;
+		_isLock = isLock;
+		_onCloud = onCloud;
+		_floor = pos.y;
+		_blockTemp = temp;
+		
+		
+	}
+}
 public class Player : Block , IMoveable
 {
 	[SerializeField]
-	public enum State
-    {
-        Idle,//no interaction
-        Master,//in interaction and state is master
-        Slave//in interaction and state is slave...
-    }
-    Vector3[] dir = new Vector3[] { Vector3.forward, Vector3.right, Vector3.back, Vector3.left };
+	
+    Vector3[] dir = { Vector3.forward, Vector3.right, Vector3.back, Vector3.left };
 
 
     [Header("Components")]
@@ -36,7 +114,7 @@ public class Player : Block , IMoveable
     public int getDirection = -1;//초기 입력된 방향 map.getdestination 에서 Cloud를 만나면 변경됨.(Player 가 사용하지않)
     public int direction = -1;//수정되는 방향값(targetposition에 의해)
 
-    public List<Tuple<Vector3, int>> targetPositions = new List<Tuple<Vector3, int>>();
+    //public List<Tuple<Vector3, int>> targetPositions = new List<Tuple<Vector3, int>>();
     
 
     [Header("Character State")]
@@ -132,11 +210,10 @@ public class Player : Block , IMoveable
 
         //CharacterMove(map.map);
 
-        map.SetBlockData((int)transform.position.x, (int)transform.position.z, temp);                
-        map.GetDestination(this, transform.position);
+        //map.SetBlockData((int)transform.position.x, (int)transform.position.z, temp);                
+        //map.GetDestination(this, transform.position);
 
-        Debug.Log(name + " : "+targetPositions.Count);
-        Debug.Log(name + " : " + "target position : " + targetPositions[targetPositions.Count - 1]);
+        
         isMoving = true;
 
         //}
@@ -204,7 +281,7 @@ public class Player : Block , IMoveable
         
         if (isMoving)
         {
-           
+           /*
             CharacterControllerMovement();
             
             float distance = Vector3.Distance(transform.position, targetPositions[0].Item1);
@@ -288,13 +365,14 @@ public class Player : Block , IMoveable
 
 
 			}
+           */
         }
         
 
     }
 
 
-
+    /*
     private void LateUpdate()
     {
         animator.SetBool("move", isMoving);
@@ -394,7 +472,7 @@ public class Player : Block , IMoveable
 
     }
 
-
+    */
 
     private void OnTriggerEnter(Collider collider)
     {
